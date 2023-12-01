@@ -9,6 +9,7 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/kernel.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/sys/__assert.h>
 #include <zephyr/logging/log.h>
@@ -16,16 +17,29 @@
 
 #define HS300X_STATUS_MASK (BIT(0) | BIT(1))
 
+/* Convert resolution in bits to array index */
+#define HS300X_RESOLUTION_INDEX(res)	(res - 9)
+
 LOG_MODULE_REGISTER(HS300X, CONFIG_SENSOR_LOG_LEVEL);
 
 struct hs300x_config {
 	struct i2c_dt_spec bus;
+#ifdef CONFIG_HS300X_GPIO_POWER
+	struct gpio_dt_spec vin_gpios;
+#endif
 };
 
 struct hs300x_data {
 	int16_t t_sample;
 	uint16_t rh_sample;
 };
+
+/*
+ * Measurement wait times for 8, 10, 12 and 14-bit resolutions respectively,
+ * including wake time. Taken from section 2.2 of HS300x datasheet (and rounded
+ * up to nearest ms).
+ */
+static const uint8_t measure_wait_ms[4] = { 1, 2, 5, 17 };
 
 static int hs300x_read_sample(const struct device *dev, uint16_t *t_sample, uint16_t *rh_sample)
 {
@@ -79,6 +93,7 @@ static int hs300x_sample_fetch(const struct device *dev, enum sensor_channel cha
 	 * measurements is 33ms, add a little safety margin...
 	 */
 	k_msleep(50);
+	//k_msleep(measure_wait_ms[DS18B20_RESOLUTION_INDEX(cfg->resolution)]);
 
 	rc = hs300x_read_sample(dev, &data->t_sample, &data->rh_sample);
 	if (rc < 0) {
@@ -133,6 +148,32 @@ static int hs300x_channel_get(const struct device *dev, enum sensor_channel chan
 	return 0;
 }
 
+#ifdef CONFIG_HS300X_GPIO_POWER
+static int hs300x_attr_get(const struct device *dev,
+					enum sensor_channel chan,
+					enum sensor_attribute attr,
+					struct sensor_value *val)
+{
+	if (chan != SENSOR_CHAN_AMBIENT_TEMP && chan != SENSOR_CHAN_HUMIDITY) {
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+
+static int hs300x_attr_set(const struct device *dev,
+					enum sensor_channel chan,
+					enum sensor_attribute attr,
+					const struct sensor_value *val)
+{
+	if (chan != SENSOR_CHAN_AMBIENT_TEMP && chan != SENSOR_CHAN_HUMIDITY) {
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+#endif
+
 static int hs300x_init(const struct device *dev)
 {
 	const struct hs300x_config *cfg = dev->config;
@@ -142,16 +183,41 @@ static int hs300x_init(const struct device *dev)
 		return -ENODEV;
 	}
 
+#ifdef CONFIG_HS300X_GPIO_POWER
+	if (!gpio_is_ready_dt(&cfg->vin_gpios)) {
+		LOG_ERR("GPIO port %s not ready", cfg->vin_gpios.port->name);
+		return -ENODEV;
+	}
+
+	//ret = gpio_pin_configure_dt(&cfg->vin_gpios, GPIO_OUTPUT_ACTIVE);
+
+	//if (ret < 0) {
+	//	return ret;
+	//}
+
+	//k_sleep(K_MSEC(R502A_DELAY));
+#endif
+
 	return 0;
 }
 
-static const struct sensor_driver_api hs300x_driver_api = {.sample_fetch = hs300x_sample_fetch,
-							   .channel_get = hs300x_channel_get};
+static const struct sensor_driver_api hs300x_driver_api = {
+	.sample_fetch = hs300x_sample_fetch,
+	.channel_get = hs300x_channel_get,
+#ifdef CONFIG_HS300X_GPIO_POWER
+	.attr_set = hs300x_attr_set,
+	.attr_get = hs300x_attr_get,
+#endif
+};
 
 #define DEFINE_HS300X(n)                                                                           \
 	static struct hs300x_data hs300x_data_##n;                                                 \
                                                                                                    \
-	static const struct hs300x_config hs300x_config_##n = {.bus = I2C_DT_SPEC_INST_GET(n)};    \
+	static const struct hs300x_config hs300x_config_##n = {						\
+	.bus = I2C_DT_SPEC_INST_GET(n),												\
+	IF_ENABLED(CONFIG_HS300X_GPIO_POWER,									\
+		(.vin_gpios = GPIO_DT_SPEC_INST_GET_OR(n, vin_gpios, {}),))			\
+	};    																		\
                                                                                                    \
 	SENSOR_DEVICE_DT_INST_DEFINE(n, hs300x_init, NULL, &hs300x_data_##n, &hs300x_config_##n,   \
 				     POST_KERNEL, CONFIG_SENSOR_INIT_PRIORITY,                     \

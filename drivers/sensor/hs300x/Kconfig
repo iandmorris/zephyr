@@ -10,3 +10,13 @@ config HS300X
 	select I2C
 	help
 	  Enable driver for HS300x temperature and humidity sensors.
+
+if HS300X
+
+config HS300X_GPIO_POWER
+	bool "HS300x GPIO Power"
+	default n
+	help
+	  HS300x is powered via a GPIO, allowing measurement resolution to be configured.
+
+endif #HS300X
