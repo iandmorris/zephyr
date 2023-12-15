@@ -1,0 +1,14 @@
+# Copyright (c) 2023 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+if SOC_SERIES_RA6M4
+
+rsource "Kconfig.defconfig.r7fa6*"
+
+config SOC_SERIES
+	default "ra6m4"
+
+config NUM_IRQS
+	default 32
+
+endif # SOC_SERIES_RA6M4

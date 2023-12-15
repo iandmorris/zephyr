@@ -1,0 +1,12 @@
+/*
+ * Copyright (c) 2023 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#define RA_SOC_PINS 144
+#define RA_SOC_HAS_MSTPCRE 1
+#define RA_SOC_MSTPD5_CHANNELS 1
+
+#include <zephyr/dt-bindings/clock/r7fa6m4xxxxxx-clock.h>
+#include <renesas/ra/ra6-cm33-common.dtsi>
