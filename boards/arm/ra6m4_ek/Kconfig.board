@@ -1,0 +1,6 @@
+# Copyright (c) 2023 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_RA6M4_EK
+	bool "Renesas EK-RA6M4 board"
+	depends on SOC_R7FA6M4AF3CFB

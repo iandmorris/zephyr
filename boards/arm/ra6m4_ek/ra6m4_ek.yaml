@@ -1,0 +1,14 @@
+identifier: ra6m4_ek
+name: Renesas EK-RA6M4
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+ram: 256
+flash: 1024
+supported:
+  - gpio
+  - uart
+vendor: renesas
