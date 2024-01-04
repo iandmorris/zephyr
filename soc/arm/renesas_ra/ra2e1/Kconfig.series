@@ -1,0 +1,13 @@
+# Copyright (c) 2024 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_SERIES_RA2E1
+	bool "Renesas RA2E1"
+	select ARM
+	select CPU_CORTEX_M23
+	select CPU_HAS_ARM_MPU
+	select CPU_CORTEX_M_HAS_SYSTICK
+	select DYNAMIC_INTERRUPTS
+	select SOC_FAMILY_RA
+	select TIMER_READS_ITS_FREQUENCY_AT_RUNTIME
+	select XIP
