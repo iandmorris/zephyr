@@ -1,0 +1,9 @@
+# Copyright (c) 2024 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+if BOARD_RA2E1_EK
+
+config BOARD
+	default "ra2e1_ek"
+
+endif #BOARD_RA2E1_EK

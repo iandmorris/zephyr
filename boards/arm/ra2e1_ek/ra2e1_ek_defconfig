@@ -1,0 +1,26 @@
+# Copyright (c) 2024 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+CONFIG_BOARD_RA2E1_EK=y
+CONFIG_SOC_SERIES_RA2E1=y
+CONFIG_SOC_R7FA2E1A92DFM=y
+
+CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC=8000000
+
+CONFIG_BUILD_OUTPUT_HEX=y
+
+# enable uart driver
+#CONFIG_SERIAL=y
+
+# enable console
+#CONFIG_CONSOLE=y
+#CONFIG_UART_CONSOLE=y
+
+# enable GPIO
+CONFIG_GPIO=y
+
+# enable pin controller
+CONFIG_PINCTRL=y
+
+# enable Clocks
+CONFIG_CLOCK_CONTROL=y
