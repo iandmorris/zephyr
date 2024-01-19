@@ -55,6 +55,9 @@
 
 #define HOCOWTCR_INIT_VALUE (6)
 
+#define FCACHEE_REG          0x4001C100
+#define FCACHEIV_REG         0x4001C104
+
 /*
  * Required cycles for sub-clokc stabilizing.
  */
@@ -259,6 +262,8 @@ static int clock_control_ra_init(const struct device *dev)
 
 	SYSTEM_write16(PRCR_OFFSET, PRCR_KEY | PRCR_CLOCKS | PRCR_LOW_POWER);
 
+	sys_write16(0, FCACHEE_REG);
+
 	if (clock_freqs[SCRSCK_hoco] == 64000000) {
 		SYSTEM_write8(HOCOWTCR_OFFSET, HOCOWTCR_INIT_VALUE);
 	}
@@ -300,6 +305,13 @@ static int clock_control_ra_init(const struct device *dev)
 
 	SYSTEM_write8(MEMWAIT_OFFSET, 1);
 	SYSTEM_write16(PRCR_OFFSET, PRCR_KEY);
+
+	sys_write16(1, FCACHEIV_REG);
+	while (sys_read16(FCACHEIV_REG) != 0) {
+		;
+	}
+
+	sys_write16(1, FCACHEE_REG);
 
 	return 0;
 }
