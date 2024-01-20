@@ -1,0 +1,12 @@
+# Copyright (c) 2024 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+if SOC_RA6M5_AHXXBG
+
+config SOC
+	default "RA6M5_AHXXBG"
+
+config NUM_IRQS
+	default 32
+
+endif # SOC_RA6M5_AHXXBG

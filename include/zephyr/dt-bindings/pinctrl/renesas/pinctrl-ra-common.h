@@ -43,4 +43,12 @@
 #define RA_PINCFG_100(port, pin, psel, opt) RA_PINCFG(port, pin, psel, opt)
 #endif
 
+#if RA_SOC_PINS >= 144
+#define RA_PINCFG_144(port, pin, psel, opt) RA_PINCFG(port, pin, psel, opt)
+#endif
+
+#if RA_SOC_PINS >= 176
+#define RA_PINCFG_176(port, pin, psel, opt) RA_PINCFG(port, pin, psel, opt)
+#endif
+
 #endif
