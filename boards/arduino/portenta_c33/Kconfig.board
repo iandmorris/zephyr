@@ -1,0 +1,6 @@
+# Copyright (c) 2024 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_ARDUINO_PORTENTA_C33
+	bool "Arduino Portenta C33 Board"
+	depends on SOC_RA6M5_BHXXBG
