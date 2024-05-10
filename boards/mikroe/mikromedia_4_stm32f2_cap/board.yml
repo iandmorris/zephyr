@@ -1,0 +1,5 @@
+board:
+  name: mikromedia_4_stm32f2_cap
+  vendor: mikroe
+  socs:
+    - name: stm32f207xx
