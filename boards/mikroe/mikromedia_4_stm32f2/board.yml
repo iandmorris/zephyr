@@ -1,0 +1,11 @@
+boards:
+
+  - name: mikroe_mikromedia_4_stm32f2_cap
+    vendor: mikroe
+    socs:
+      - name: stm32f207xx
+
+  - name: mikroe_mikromedia_4_stm32f2_res
+    vendor: mikroe
+    socs:
+      - name: stm32f207xx
