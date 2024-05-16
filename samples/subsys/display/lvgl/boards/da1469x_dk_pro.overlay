@@ -1,0 +1,12 @@
+&spi_controller {
+	group1 {
+		pinmux = <SMARTBOND_PINMUX(SPI_CLK, 0, 27)>,
+			<SMARTBOND_PINMUX(SPI_DO, 0, 24)>,
+			<SMARTBOND_PINMUX(SPI_EN, 0 , 21)>;
+		output-enable;
+	};
+	group2 {
+		pinmux = <SMARTBOND_PINMUX(SPI_DI, 0, 26)>;
+		input-enable;
+	};
+};
