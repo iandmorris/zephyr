@@ -475,8 +475,25 @@ static void uart_ra_irq_tx_enable(const struct device *dev)
 
 	key = k_spin_lock(&data->lock);
 
+	/*
+	 * TE and TIE bits need to be set simultaneously so first disable TE but
+	 * ensure any transmission currently in progress is finished first...
+	 */
 	reg_val = uart_ra_read_8(dev, SCR);
-	reg_val |= (REG_MASK(SCR_TIE));
+	reg_val &= ~(REG_MASK(SCR_TIE) | REG_MASK(SCR_TEIE));
+	uart_ra_write_8(dev, SCR, reg_val);
+
+	while (!(uart_ra_read_8(dev, SSR) & REG_MASK(SSR_TEND)) ||
+	       !(uart_ra_read_8(dev, SSR) & REG_MASK(SSR_TDRE))) {
+		;
+	}
+
+	reg_val = uart_ra_read_8(dev, SCR);
+	reg_val &= ~(REG_MASK(SCR_TE));
+	uart_ra_write_8(dev, SCR, reg_val);
+
+	reg_val = uart_ra_read_8(dev, SCR);
+	reg_val |= (REG_MASK(SCR_TE) | REG_MASK(SCR_TIE));
 	uart_ra_write_8(dev, SCR, reg_val);
 
 	irq_enable(data->irqn[UART_RA_INT_TXI]);
@@ -504,7 +521,7 @@ static void uart_ra_irq_tx_disable(const struct device *dev)
 static int uart_ra_irq_tx_ready(const struct device *dev)
 {
 	const uint8_t reg_val = uart_ra_read_8(dev, SSR);
-	const uint8_t mask = REG_MASK(SSR_TEND) & REG_MASK(SSR_TDRE);
+	const uint8_t mask = REG_MASK(SSR_TEND) | REG_MASK(SSR_TDRE);
 
 	return (reg_val & mask) == mask;
 }
