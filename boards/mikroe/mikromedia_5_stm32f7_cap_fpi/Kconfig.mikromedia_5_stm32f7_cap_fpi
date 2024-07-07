@@ -1,0 +1,5 @@
+# Copyright (c) 2024 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_MIKROMEDIA_5_STM32F7_CAP_FPI
+	select SOC_STM32F746XX

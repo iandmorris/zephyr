@@ -1,0 +1,12 @@
+# Copyright (c) 2024 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+if BOARD_MIKROMEDIA_5_STM32F7_CAP_FPI
+
+config USB_DEVICE_STACK
+	default y
+
+config USB_CDC_ACM
+	default SERIAL
+
+endif #BOARD_MIKROMEDIA_5_STM32F7_CAP_FPI

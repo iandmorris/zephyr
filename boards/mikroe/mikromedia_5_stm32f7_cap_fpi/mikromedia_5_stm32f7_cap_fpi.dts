@@ -1,0 +1,168 @@
+/*
+ * Copyright (c) 2024 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+#include <st/f7/stm32f746Xg.dtsi>
+#include <st/f7/stm32f746zgtx-pinctrl.dtsi>
+
+/ {
+	model = "Mikroe Mikromedia 5 STM32F7 Capacitive FPI";
+	compatible = "st,stm32f746";
+
+	chosen {
+		zephyr,console = &usart2;
+		zephyr,shell-uart = &cdc_acm_uart0;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,display = &ltdc;
+	};
+
+	aliases {
+		magn0 = &fxos8700;
+		accel0 = &fxos8700;
+	};
+};
+
+&clk_lsi {
+	status = "okay";
+};
+
+&clk_hse {
+	hse-bypass;
+	clock-frequency = <DT_FREQ_M(8)>; /* STLink 8MHz clock */
+	status = "okay";
+};
+
+&pll {
+	div-m = <4>;
+	mul-n = <192>;
+	div-p = <2>;
+	div-q = <8>;
+	clocks = <&clk_hse>;
+	status = "okay";
+};
+
+&rcc {
+	clocks = <&pll>;
+	clock-frequency = <DT_FREQ_M(192)>;
+	ahb-prescaler = <1>;
+	apb1-prescaler = <4>;
+	apb2-prescaler = <2>;
+};
+
+&usart2 {
+	pinctrl-0 = <&usart2_tx_pd5 &usart2_rx_pa3>;
+	pinctrl-names = "default";
+	current-speed = <115200>;
+	status = "okay";
+};
+
+&uart4 {
+	pinctrl-0 = <&uart4_tx_pa0 &uart4_rx_pa1>;
+	pinctrl-names = "default";
+	current-speed = <115200>;
+	status = "okay";
+};
+
+&usart6 {
+	pinctrl-0 = <&usart6_tx_pc6 &usart6_rx_pc7>;
+	pinctrl-names = "default";
+	current-speed = <115200>;
+	status = "okay";
+};
+
+&i2c1 {
+	pinctrl-0 = <&i2c1_scl_pb6 &i2c1_sda_pb7>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	fxos8700: fxos8700@1e {
+		compatible = "nxp,fxos8700";
+		reg = <0x1e>;
+	};
+};
+
+&i2c2 {
+	pinctrl-0 = <&i2c2_scl_pf1 &i2c2_sda_pf0>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&i2c3 {
+	pinctrl-0 = <&i2c3_scl_pa8 &i2c3_sda_pc9>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&spi1 {
+	pinctrl-0 = <&spi1_nss_pa4 &spi1_sck_pa5
+		      &spi1_miso_pa6 &spi1_mosi_pb5>;
+	pinctrl-names = "default";
+	status = "okay";
+	cs-gpios = <&gpiod 2 GPIO_ACTIVE_HIGH>;
+
+	sdhc0: sdhc@0 {
+		compatible = "zephyr,sdhc-spi-slot";
+		reg = <0>;
+		status = "okay";
+		spi-max-frequency = <24000000>;
+		mmc {
+			compatible = "zephyr,sdmmc-disk";
+			disk-name = "SD";
+			status = "okay";
+		};
+	};
+};
+
+&spi2 {
+	pinctrl-0 = <&spi2_sck_pb13 &spi2_miso_pb14 &spi2_mosi_pb15>;
+	pinctrl-names = "default";
+	cs-gpios = <&gpiob 11 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+	status = "okay";
+
+	nor_flash: sst26vf064b@0 {
+		compatible ="jedec,spi-nor";
+		size = <0x800000>;
+		reg = <0>;
+		spi-max-frequency = <80000000>;
+		status = "okay";
+		jedec-id = [bf 26 43];
+	};
+};
+
+&ltdc {
+	status = "okay";
+
+	width = <480>;
+	height = <272>;
+	pixel-format = <PANEL_PIXEL_FORMAT_RGB_565>;
+	display-timings {
+		compatible = "zephyr,panel-timing";
+		de-active = <0>;
+		pixelclk-active = <0>;
+		hsync-active = <0>;
+		vsync-active = <0>;
+		hsync-len = <1>;
+		vsync-len = <10>;
+		hback-porch = <43>;
+		vback-porch = <12>;
+		hfront-porch = <8>;
+		vfront-porch = <4>;
+	};
+	def-back-color-red = <0xFF>;
+	def-back-color-green = <0xFF>;
+	def-back-color-blue = <0xFF>;
+};
+
+zephyr_udc0: &usbotg_fs {
+	pinctrl-0 = <&usb_otg_fs_dm_pa11 &usb_otg_fs_dp_pa12>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	cdc_acm_uart0: cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
+	};
+};
