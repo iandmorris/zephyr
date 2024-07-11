@@ -1,0 +1,71 @@
+/*
+ * Copyright (c) 2024 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+/ {
+	model = "Arduino Portenta C33";
+	compatible = "renesas,r7fa6m5bh2cbg";
+
+	chosen {
+		zephyr,console = &uart0;
+		zephyr,shell-uart = &uart0;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led_r: led_r {
+			gpios = <&ioport1 7 GPIO_ACTIVE_HIGH>;
+			label = "Red LED";
+		};
+		led_g: led_g {
+			gpios = <&ioport4 0 GPIO_ACTIVE_HIGH>;
+			label = "Green LED";
+		};
+		led_b: led_b {
+			gpios = <&ioport8 0 GPIO_ACTIVE_HIGH>;
+			label = "Blue LED";
+		};
+	};
+
+	aliases {
+		led0 = &led_r;
+		led1 = &led_g;
+		led2 = &led_b;
+	};
+};
+
+&ioport1 {
+	status = "okay";
+};
+
+&ioport4 {
+	status = "okay";
+};
+
+&ioport8 {
+	status = "okay";
+};
+
+/* TODO - fix the following when I2C support is added for this SoC */
+&i2c {
+	status = "okay";
+
+	max17262@36 {
+		compatible = "maxim,max17262";
+		reg = <0x36>;
+		design-voltage = <3600>;
+		desired-voltage = <3600>;
+		desired-charging-current = <2000>;
+		design-cap = <17000>;
+		empty-voltage = <3300>;
+		recovery-voltage = <3880>;
+		charge-voltage = <3600>;
+		status = "okay";
+	};
+};
