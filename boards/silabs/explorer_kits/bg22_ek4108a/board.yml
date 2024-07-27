@@ -1,0 +1,8 @@
+# Copyright (c) 2024 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+board:
+  name: bg22_ek4108a
+  vendor: silabs
+  socs:
+    - name: efr32bg22c224f512im40
