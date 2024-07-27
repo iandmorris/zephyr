@@ -1,0 +1,125 @@
+/*
+ * Copyright (c) 2024 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+#include <silabs/efr32bg22.dtsi>
+#include <silabs/efr32bg2x-pinctrl.dtsi>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+/ {
+	model = "Silicon Labs BG22 Bluetooth SoC Explorer Kit";
+	compatible = "silabs,efr32bg22c224f512im40";
+
+	chosen {
+		zephyr,console = &usart1;
+		zephyr,shell-uart = &usart1;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,bt-hci = &bt_hci_silabs;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		ld0: led_0 {
+			gpios = <&gpioa GECKO_PIN(4) GPIO_ACTIVE_HIGH>;
+			label = "LED 0";
+		};
+	};
+
+	buttons {
+		compatible = "gpio-keys";
+		button0: button_0 {
+			gpios = <&gpioc GECKO_PIN(7) GPIO_ACTIVE_LOW>;
+			label = "User Push Button 0";
+			zephyr,code = <INPUT_KEY_0>;
+		};
+	};
+
+	mikrobus_header: mikrobus-connector {
+		compatible = "mikro-bus";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map =	<0 0 &gpiob GECKO_PIN(0) 0>,	/* AN  */
+				<1 0 &gpioc GECKO_PIN(6) 0>,	/* RST */
+				<2 0 &gpioc GECKO_PIN(3) 0>,	/* CS   */
+				<3 0 &gpioc GECKO_PIN(2) 0>,	/* SCK  */
+				<4 0 &gpioc GECKO_PIN(1) 0>,	/* MISO */
+				<5 0 &gpioc GECKO_PIN(0) 0>,	/* MOSI */
+							/* +3.3V */
+							/* GND */
+				<6 0 &gpiob GECKO_PIN(4) 0>,	/* PWM  */
+				<7 0 &gpiob GECKO_PIN(3) 0>,	/* INT  */
+				<8 0 &gpiob GECKO_PIN(2) 0>,	/* RX   */
+				<9 0 &gpiob GECKO_PIN(1) 0>,	/* TX   */
+				<10 0 &gpiod GECKO_PIN(2) 0>,	/* SCL  */
+				<11 0 &gpiod GECKO_PIN(3) 0>;	/* SDA  */
+							/* +5V */
+							/* GND */
+	};
+
+	aliases {
+		led0 = &ld0;
+		sw0 = &button0;
+	};
+};
+
+&usart0 {
+	status = "okay";
+	pinctrl-0 = <&usart0_default>;
+	pinctrl-names = "default";
+};
+
+&usart1 {
+	current-speed = <115200>;
+	status = "okay";
+	pinctrl-0 = <&usart1_default>;
+	pinctrl-names = "default";
+};
+
+&gpioa {
+	status = "okay";
+};
+
+&gpiob {
+	status = "okay";
+};
+
+&gpioc {
+	status = "okay";
+};
+
+&gpiod {
+	status = "okay";
+};
+
+&pinctrl {
+	i2c0_default: i2c0_default {
+		group1 {
+			psels = <GECKO_PSEL(I2C_SDA, D, 3)>,
+				<GECKO_PSEL(I2C_SCL, D, 2)>,
+				<GECKO_LOC(I2C_SDA, 3)>,
+				<GECKO_LOC(I2C_SCL, 3)>;
+		};
+	};
+};
+
+&i2c0 {
+	pinctrl-0 = <&i2c0_default>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&bt_hci_silabs {
+	status = "okay";
+};
+
+&trng {
+	status = "okay";
+};
+
+mikrobus_serial: &usart0 {};
+mikrobus_i2c: &i2c0 {};
