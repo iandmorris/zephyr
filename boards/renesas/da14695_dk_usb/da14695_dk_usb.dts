@@ -225,3 +225,9 @@ mikrobus_2_i2c: &i2c2 {};
 mikrobus_2_spi: &spi2 {};
 
 mikrobus_2_uart: &uart3 {};
+
+mikrobus_i2c: &mikrobus_1_i2c {};
+
+mikrobus_spi: &mikrobus_1_spi {};
+
+mikrobus_serial: &mikrobus_1_uart {};
