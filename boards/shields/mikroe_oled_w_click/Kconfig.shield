@@ -1,0 +1,8 @@
+# Copyright (c) 2025 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+config SHIELD_MIKROE_OLED_W_CLICK
+	def_bool $(shields_list_contains,mikroe_oled_w_click)
+
+config SHIELD_MIKROE_OLED_W_CLICK_SPI
+	def_bool $(shields_list_contains,mikroe_oled_w_click_spi)

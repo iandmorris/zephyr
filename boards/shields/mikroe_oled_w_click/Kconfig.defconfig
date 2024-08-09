@@ -1,0 +1,20 @@
+# Copyright (c) 2025 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+if DISPLAY
+
+if LVGL
+
+config LV_Z_VDB_SIZE
+	default 64
+
+config LV_Z_BITS_PER_PIXEL
+	default 1
+
+choice LV_COLOR_DEPTH
+	default LV_COLOR_DEPTH_1
+endchoice
+
+endif # LVGL
+
+endif # DISPLAY
