@@ -1,0 +1,14 @@
+#
+# Copyright (c) 2024 Ian Morris
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+sample:
+  description: Digital Power Monitor polling sample
+  name: DPM polling sample
+tests:
+  sample.sensor.dht_polling:
+    build_only: true
+    platform_allow: blackpill_f411ce
+    tags: sensors
