@@ -1,0 +1,103 @@
+/*
+ * Copyright (c) 2024 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <renesas/ra/ra6/r7fa6m5bh2cbg.dtsi>
+#include <dt-bindings/gpio/gpio.h>
+
+#include "arduino_portenta_c33-pinctrl.dtsi"
+
+/ {
+	model = "Arduino Portenta C33";
+	compatible = "renesas,ra6m5", "renesas,ra";
+
+	chosen {
+		zephyr,console = &uart7;
+		zephyr,shell-uart = &uart7;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led_r: led_r {
+			gpios = <&ioport1 7 GPIO_ACTIVE_HIGH>;
+			label = "Red LED";
+		};
+		led_g: led_g {
+			gpios = <&ioport4 0 GPIO_ACTIVE_HIGH>;
+			label = "Green LED";
+		};
+		led_b: led_b {
+			gpios = <&ioport8 0 GPIO_ACTIVE_HIGH>;
+			label = "Blue LED";
+		};
+	};
+
+	aliases {
+		led0 = &led_r;
+		led1 = &led_g;
+		led2 = &led_b;
+	};
+};
+
+&ioport1 {
+	status = "okay";
+};
+
+&ioport4 {
+	status = "okay";
+};
+
+&ioport8 {
+	status = "okay";
+};
+
+&xtal {
+	clock-frequency = <DT_FREQ_M(24)>;
+	mosel = <0>;
+	#clock-cells = <0>;
+	status = "okay";
+};
+
+&subclk {
+	status = "okay";
+};
+
+&pll {
+	source = <RA_PLL_SOURCE_MAIN_OSC>;
+	div = <RA_PLL_DIV_3>;
+	mul = <25 0>;
+	status = "okay";
+};
+
+&sci7 {
+	pinctrl-0 = <&sci7_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	uart7: uart {
+		current-speed = <115200>;
+		status = "okay";
+	};
+};
+
+&sci8 {
+	pinctrl-0 = <&sci8_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	uart8: uart {
+		current-speed = <115200>;
+		hw-flow-control;
+		status = "okay";
+
+		esp32_c3_mini {
+			compatible = "espressif,esp-at";
+			power-gpios = <&ioport8 4 GPIO_ACTIVE_HIGH>;
+			status = "okay";
+		};
+	};
+};
