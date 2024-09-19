@@ -1,0 +1,28 @@
+# Copyright (c) 2026 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+if SHIELD_MIKROE_OLED_C_CLICK
+
+if DISPLAY
+
+if LVGL
+
+config LV_COLOR_16_SWAP
+	default y
+
+config LV_Z_BITS_PER_PIXEL
+	default 16
+
+choice LV_COLOR_DEPTH
+	default LV_COLOR_DEPTH_16
+endchoice
+
+endif # LVGL
+
+# Required to enable boost voltage regulator
+config REGULATOR
+	default y
+
+endif # DISPLAY
+
+endif # SHIELD_MIKROE_OLED_C_CLICK
