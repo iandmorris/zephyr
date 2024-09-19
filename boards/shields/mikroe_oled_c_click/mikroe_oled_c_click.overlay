@@ -1,0 +1,48 @@
+/*
+ * Copyright (c) 2026 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	chosen {
+		zephyr,display = &psp27801_mikroe_oled_c_click;
+	};
+
+	boost-enable {
+		compatible = "regulator-fixed";
+		regulator-name = "boost-enable";
+		enable-gpios = <&mikrobus_header 7 GPIO_ACTIVE_HIGH>;
+		regulator-boot-on;
+	};
+
+	mipi_dbi {
+		compatible = "zephyr,mipi-dbi-spi";
+		spi-dev = <&mikrobus_spi>;
+		dc-gpios = <&mikrobus_header 6 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&mikrobus_header 1 GPIO_ACTIVE_LOW>;
+		write-only;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		psp27801_mikroe_oled_c_click: ssd1351@0 {
+			compatible = "solomon,ssd1351";
+			mipi-max-frequency = <1000000>;
+			mipi-mode = "MIPI_DBI_MODE_SPI_4WIRE";
+			reg = <0>;
+			width = <96>;
+			height = <96>;
+			display-offset = <32>;
+			start-line = <0>;
+			multiplex-ratio = <95>;
+			phase-length = <0x32>;
+			oscillator-freq = <0xf1>;
+			precharge-time = <0x32>;
+			precharge-voltage = <0x17>;
+			vcomh-voltage = <0x5>;
+			current-att = <0>;
+			remap-value = <0x72>;
+			column-offset = <16>;
+		};
+	};
+};
