@@ -1,0 +1,36 @@
+/*
+ * Copyright (c) 2024 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	chosen {
+		zephyr,display = &mi9639bo_w_96x39;
+	};
+};
+
+&mikrobus_spi {
+	status = "okay";
+
+	mi9639bo_w_96x39: ssd1306@0 {
+		compatible = "solomon,ssd1306fb";
+		reg = <0x0>;
+		spi-max-frequency = <10000000>;
+		data_cmd-gpios = <&mikrobus_header 6 0>;
+
+		width = <96>;
+		height = <96>;
+
+		segment-offset = <0>;
+		page-offset = <0>;
+		display-offset = <0>;
+		multiplex-ratio = <31>;
+		prechargep = <0x22>;
+		ready-time-ms = <10>;
+		segment-remap;
+		com-invdir;
+		com-sequential;
+		use-internal-iref;
+	};
+};
