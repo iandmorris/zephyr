@@ -1,0 +1,26 @@
+/*
+ * Copyright (c) 2024 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	pmod_header: pmod-connector {
+		compatible = "digilent,pmod";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map =	<0 0 &mikrobus_header 2 0>,	/* CS   -> IO1  */
+				<1 0 &mikrobus_header 5 0>,		/* MOSI -> IO2 */
+				<2 0 &mikrobus_header 4 0>,		/* MISO -> IO3 */
+				<3 0 &mikrobus_header 3 0>,		/* SCK  -> IO4 */
+				<4 0 &mikrobus_header 8 0>,		/* TX   -> IO5 */
+				<5 0 &mikrobus_header 9 0>,		/* RX   -> IO6 */
+				<6 0 &mikrobus_header 10 0>,	/* SCL  -> IO7 */
+				<7 0 &mikrobus_header 11 0>;	/* SDA  -> IO8 */
+	};
+};
+
+pmod_i2c: &mikrobus_i2c {};
+pmod_spi: &mikrobus_spi {};
+pmod_serial: &mikrobus_serial {};
