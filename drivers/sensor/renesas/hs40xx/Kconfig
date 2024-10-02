@@ -1,0 +1,12 @@
+# Renesas HS40xx temperature and humidity sensor configuration options
+
+# Copyright (c) 2024 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+config HS40XX
+	bool "HS40xx Temperature and Humidity Sensor"
+	default y
+	depends on DT_HAS_RENESAS_HS40XX_ENABLED
+	select I2C
+	help
+	  Enable driver for HS40xx temperature and humidity sensors.
