@@ -1,0 +1,20 @@
+/*
+ * Copyright (c) 2024 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	aliases {
+		dht0 = &renesas_qciot_hs4001pocz;
+	};
+};
+
+&pmod_i2c {
+	status = "okay";
+
+	renesas_qciot_hs4001pocz: hs4001@54 {
+		compatible = "renesas,hs40xx";
+		reg = <0x54>;
+	};
+};
