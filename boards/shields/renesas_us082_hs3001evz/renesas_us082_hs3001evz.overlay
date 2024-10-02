@@ -1,0 +1,20 @@
+/*
+ * Copyright (c) 2024 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	aliases {
+		dht0 = &renesas_us082_hs3001evz;
+	};
+};
+
+&pmod_i2c {
+	status = "okay";
+
+	renesas_us082_hs3001evz: hs3001@44 {
+		compatible = "renesas,hs300x";
+		reg = <0x44>;
+	};
+};
