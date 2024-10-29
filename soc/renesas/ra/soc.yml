@@ -58,6 +58,7 @@ family:
       - name: ra6m5
         socs:
           - name: r7fa6m5bh3cfc
+          - name: r7fa6m5ah3cfp
       - name: ra6e1
         socs:
           - name: r7fa6e10f2cfp
