@@ -1,0 +1,59 @@
+/*
+ * Copyright (c) 2024 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	mikrobus_header_1: mikrobus-connector-1 {
+		compatible = "mikro-bus";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map =	<0 0 &feather_header 0 0>,	/* AN   -> A0 */
+				<1 0 &feather_header 2 0>,		/* RST  -> A2 */
+				<2 0 &feather_header 5 0>,		/* CS   -> D25 */
+				<3 0 &feather_header 6 0>,		/* SCK  -> SCK */
+				<4 0 &feather_header 8 0>,		/* MISO -> MISO */
+				<5 0 &feather_header 7 0>,		/* MOSI -> MOSI */
+								/* +3.3V */
+								/* GND */
+				<6 0 &feather_header 3 0>,		/* PWM  -> A3 */
+				<7 0 &feather_header 4 0>,		/* INT  -> D24 */
+				<8 0 &feather_header 9 0>,		/* RX   -> RX */
+				<9 0 &feather_header 10 0>,		/* TX   -> TX */
+				<10 0 &feather_header 13 0>,	/* SCL  -> SCL */
+				<11 0 &feather_header 12 0>;	/* SDA  -> SDA */
+								/* +5V */
+								/* GND */
+	};
+
+	mikrobus_header_2: mikrobus-connector-2 {
+		compatible = "mikro-bus";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map =	<0 0 &feather_header 1 0>,	/* AN   -> A1 */
+				<1 0 &feather_header 19 0>,		/* RST  -> D12 */
+				<2 0 &feather_header 17 0>,		/* CS   -> D9 */
+				<3 0 &feather_header 6 0>,		/* SCK  -> SCK */
+				<4 0 &feather_header 8 0>,		/* MISO -> MISO */
+				<5 0 &feather_header 7 0>,		/* MOSI -> MOSI */
+								/* +3.3V */
+								/* GND */
+				<6 0 &feather_header 20 0>,		/* PWM  -> D13 */
+				<7 0 &feather_header 18 0>,		/* INT  -> D10 */
+				<8 0 &feather_header 9 0>,		/* RX   -> RX */
+				<9 0 &feather_header 10 0>,		/* TX   -> TX */
+				<10 0 &feather_header 13 0>,	/* SCL  -> SCL */
+				<11 0 &feather_header 12 0>;	/* SDA  -> SDA */
+								/* +5V */
+								/* GND */
+	};
+};
+
+mikrobus_spi: &feather_spi {};
+mikrobus_serial: &feather_serial {};
+mikrobus_i2c: &feather_i2c {};
+
+mikrobus_header: &mikrobus_header_1 {};
