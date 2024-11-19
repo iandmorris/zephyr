@@ -1,0 +1,150 @@
+/*
+ * Copyright (c) 2025 Ian Morris
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <renesas/ra/ra6/r7fa6m5ah3cfp.dtsi>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/led/led.h>
+#include <dt-bindings/input/input-event-codes.h>
+
+#include "sparkfun_thing_plus_ra6m5.dtsi"
+#include "feather_connector.dtsi"
+
+/ {
+	model = "Sparkfun Thing Plus RA6M5";
+	compatible = "renesas,ra6m5", "renesas,ra";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,console = &uart3;
+		zephyr,shell-uart = &uart3;
+		zephyr,bt-hci = &bt_hci_uart;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		ld1: led_1 {
+			gpios = <&ioport1 6 GPIO_ACTIVE_HIGH>;
+			label = "User LED 1";
+		};
+	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+		btn1: button_1 {
+			label = "User Button 1";
+			gpios = <&ioport4 15 GPIO_ACTIVE_LOW>;
+			zephyr,code = <INPUT_KEY_0>;
+		};
+	};
+
+	aliases {
+		led0 = &ld1;
+		sw0 = &btn1;
+	};
+};
+
+&sci3 {
+	pinctrl-0 = <&sci3_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	uart3: uart {
+		current-speed = <115200>;
+		status = "okay";
+	};
+};
+
+&sci9 {
+	pinctrl-0 = <&sci9_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	uart9: uart {
+		hw-flow-control;
+		current-speed = <115200>;
+		status = "okay";
+
+		bt_hci_uart: bt_hci_uart {
+			compatible = "zephyr,bt-hci-uart";
+			status = "okay";
+
+			da1453x {
+				compatible = "renesas,bt-hci-da1453x";
+				reset-gpios = <&ioport1 15 GPIO_ACTIVE_LOW>;
+			};
+		};
+	};
+};
+
+&iic0 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	interrupts = <91 1>, <92 1>, <93 1>, <94 1>;
+	interrupt-names = "rxi", "txi", "tei", "eri";
+	clock-frequency = <DT_FREQ_K(400)>;
+	pinctrl-0 = <&iic0_default>;
+	pinctrl-names = "default";
+
+	max17048: max17048@36 {
+		compatible = "maxim,max17048";
+		status = "okay";
+		reg = <0x36 >;
+	};
+};
+
+&spi0 {
+	pinctrl-0 = <&spi0_default>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&ioport0 {
+	status = "okay";
+};
+
+&ioport1 {
+	status = "okay";
+};
+
+&ioport2 {
+	status = "okay";
+};
+
+&ioport3 {
+	status = "okay";
+};
+
+&ioport4 {
+	status = "okay";
+};
+
+&ioport5 {
+	status = "okay";
+};
+
+&port_irq8 {
+	interrupts = <41 12>;
+	status = "okay";
+};
+
+&xtal {
+	clock-frequency = <DT_FREQ_M(24)>;
+	mosel = <0>;
+	#clock-cells = <0>;
+	status = "okay";
+};
+
+&subclk {
+	status = "okay";
+};
+
+&pll {
+	clocks = <&xtal>;
+	div = <3>;
+	mul = <25 0>;
+	status = "okay";
+};

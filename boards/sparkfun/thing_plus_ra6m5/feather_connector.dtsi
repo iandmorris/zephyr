@@ -1,0 +1,38 @@
+/*
+ * Copyright (c) 2025 Ian Morris
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	feather_header: feather_connector {
+		compatible = "adafruit-feather-header";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map = <0 0 &ioport0 14 0>,	/* A0 */
+			   <1 0 &ioport0 15 0>,		/* A1 */
+			   <2 0 &ioport5 5 0>,		/* A2 */
+			   <3 0 &ioport5 4 0>,		/* A3 */
+			   <4 0 &ioport5 3 0>,		/* A4 or D24 */
+			   <5 0 &ioport5 2 0>,		/* A5 or D25 */
+			   <6 0 &ioport1 11 0>,		/* SCK */
+			   <7 0 &ioport1 9 0>,		/* MOSI */
+			   <8 0 &ioport1 10 0>,		/* MISO */
+			   <9 0 &ioport4 8 0>,		/* RX or D0 */
+			   <10 0 &ioport4 9 0>,		/* TX or D1 */
+			   <11 0 &ioport3 4 0>,		/* FREE */
+			   <12 0 &ioport4 1 0>,		/* SDA */
+			   <13 0 &ioport4 0 0>,		/* SCL */
+			   <14 0 &ioport2 7 0>,		/* D5 */
+			   <15 0 &ioport4 2 0>,		/* D6 */
+			   <16 0 &ioport4 3 0>,		/* D9 */
+			   <17 0 &ioport4 4 0>,		/* D10 */
+			   <18 0 &ioport4 5 0>,		/* D11 */
+			   <19 0 &ioport4 6 0>,		/* D12 */
+			   <20 0 &ioport1 12 0>;	/* D13 */
+	};
+};
+
+feather_serial: &sci3 { };
+feather_i2c: &iic0 { };
+feather_spi: &spi0 {};
