@@ -1,0 +1,5 @@
+# Copyright (c) 2025 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_SPARKFUN_THING_PLUS_RA6M5
+	select SOC_R7FA6M5AH3CFP
