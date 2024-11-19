@@ -1,0 +1,9 @@
+# Copyright (c) 2025 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+board:
+  name: sparkfun_thing_plus_ra6m5
+  full_name: Thing Plus RA6M5
+  vendor: sparkfun
+  socs:
+    - name: r7fa6m5ah3cfp
