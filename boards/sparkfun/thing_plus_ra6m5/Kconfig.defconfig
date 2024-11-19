@@ -1,0 +1,8 @@
+# Copyright (c) 2025 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+if BOARD_SPARKFUN_THING_PLUS_RA6M5
+
+# TODO - Remove this file if nothing needs to be configured...
+
+endif # BOARD_SPARKFUN_THING_PLUS_RA6M5
