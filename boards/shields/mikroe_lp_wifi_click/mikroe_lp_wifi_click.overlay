@@ -10,6 +10,7 @@
 
 	rrq61000 {
 		compatible = "renesas,rrq-at";
+		reset-gpios = <&mikrobus_header 1 GPIO_ACTIVE_LOW>;
 		status = "okay";
 	};
 };

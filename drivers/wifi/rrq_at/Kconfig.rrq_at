@@ -4,3 +4,14 @@
 menuconfig WIFI_RRQ_AT
 	bool "Renesas RRQ AT Command support"
 	default y
+	depends on DT_HAS_RENESAS_RRQ_AT_ENABLED
+	select MODEM
+	select MODEM_CONTEXT
+	select MODEM_CMD_HANDLER
+	select MODEM_IFACE_UART
+	select NET_L2_WIFI_MGMT
+	select WIFI_OFFLOAD
+	imply UART_USE_RUNTIME_CONFIGURE
+	help
+	  Enable Renesas RRQ AT Command offloaded WiFi driver supported on
+	  RRQ61xxx devices.
