@@ -1,0 +1,12 @@
+# Copyright (c) 2025 Renesas Electronics Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+description: Renesas RRQ61xxx WiFi modem (AT Commands)
+
+compatible: "renesas,rrq-at"
+
+include: uart-device.yaml
+
+properties:
+  reset-gpios:
+    type: phandle-array
