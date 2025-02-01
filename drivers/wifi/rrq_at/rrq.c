@@ -6,7 +6,8 @@
 
 #define DT_DRV_COMPAT renesas_rrq_at
 
-#define RRQ_MTU		2048 /* TODO - what should this be set to? */
+#define RRQ_MTU				2048 /* TODO - what should this be set to? */
+#define MODEM_BUF_SIZE		CONFIG_WIFI_RRQ_AT_MODEM_BUF_SIZE
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(wifi_rrq_at, CONFIG_WIFI_LOG_LEVEL);
@@ -15,6 +16,9 @@ LOG_MODULE_REGISTER(wifi_rrq_at, CONFIG_WIFI_LOG_LEVEL);
 
 #include <zephyr/net/wifi_mgmt.h>
 #include <zephyr/net/conn_mgr/connectivity_wifi_mgmt.h>
+
+#include "modem_context.h" // TODO zephyr paths?
+#include "modem_iface_uart.h"
 
 #include "rrq_offload.h"
 
@@ -26,6 +30,13 @@ struct rrq_config {
 
 struct rrq_data {
 	struct net_if *net_iface;
+
+	/* todo - put all of this in a struct called rrq_modem outside of this one? */
+	struct modem_context context;
+	struct modem_iface_uart_data iface_data;
+	uint8_t modem_buf[MODEM_BUF_SIZE];
+	//struct modem_cmd_handler_data cmd_handler_data;
+	//uint8_t cmd_match_buf[MDM_RECV_BUF_SIZE];
 };
 
 static const struct rrq_config rrq_driver_config = {
@@ -127,9 +138,42 @@ CONNECTIVITY_WIFI_MGMT_BIND(Z_DEVICE_DT_DEV_ID(DT_DRV_INST(0)));
 
 static int rrq_init(const struct device *dev)
 {
+#if DT_INST_NODE_HAS_PROP(0, reset_gpios)
+	const struct rrq_config *config = dev->config;
+#endif
+	struct rrq_data *data = dev->data;
 	int ret = 0;
+
+	const struct modem_iface_uart_config uart_config = {
+		.rx_rb_buf = &data->modem_buf[0],
+		.rx_rb_buf_len = sizeof(data->modem_buf),
+		.dev = DEVICE_DT_GET(DT_INST_BUS(0)),
+		//.hw_flow_control = DT_PROP(ESP_BUS, hw_flow_control), // TODO - fix this...?
+	};
+
+	/* The context must be registered before the serial port is initialised. */
+	data->context.driver_data = data;
+	ret = modem_context_register(&data->context);
+	if (ret < 0) {
+		LOG_ERR("Error registering modem context: %d", ret);
+		goto error;
+	}
+
+	ret = modem_iface_uart_init(&data->context.iface, &data->iface_data, &uart_config);
+	if (ret < 0) {
+		goto error;
+	}
+
+#if DT_INST_NODE_HAS_PROP(0, reset_gpios)
+	ret = gpio_pin_configure_dt(&config->reset, GPIO_OUTPUT_INACTIVE);
+	if (ret < 0) {
+		LOG_ERR("Failed to configure %s pin", "reset");
+		goto error;
+	}
+#endif
 
 	ret = rrq_reset(dev);
 
+error:
 	return ret;
 }
