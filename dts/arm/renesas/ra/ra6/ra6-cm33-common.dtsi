@@ -346,6 +346,22 @@
 			status = "okay";
 		};
 
+		eth: ethernet@40114100 {
+			compatible = "renesas,ra-ethernet";
+			reg = <0x40114100 0xfc>;
+			interrupts = <51 0>;
+			local-mac-address = [00 11 22 33 44 55];
+			phy-connection-type = "rmii";
+			status = "disabled";
+		};
+
+		mdio: mdio {
+			compatible = "renesas,ra-mdio";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
 		port_irq0: external-interrupt@40006000 {
 			compatible = "renesas,ra-external-interrupt";
 			reg = <0x40006000 0x1>;
