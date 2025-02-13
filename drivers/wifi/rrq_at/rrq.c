@@ -11,6 +11,9 @@
 #define MODEM_RECV_MAX_BUF		CONFIG_WIFI_RRQ_AT_MODEM_RX_BUF_COUNT
 #define MODEM_RECV_BUF_SIZE		CONFIG_WIFI_RRQ_AT_MODEM_RX_BUF_SIZE
 
+#define RRQ_CMD_WFSCAN 			"AT+WFSCAN"
+#define RRQ_SCAN_TIMEOUT		K_SECONDS(10)
+
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(wifi_rrq_at, CONFIG_WIFI_LOG_LEVEL);
 
@@ -32,6 +35,9 @@ K_KERNEL_STACK_DEFINE(rrq_rx_stack,
 		      CONFIG_WIFI_RRQ_AT_RX_STACK_SIZE);
 struct k_thread rrq_rx_thread;
 
+K_KERNEL_STACK_DEFINE(rrq_workq_stack,
+	CONFIG_WIFI_RRQ_AT_WORKQ_STACK_SIZE);
+
 struct rrq_config {
 #if DT_INST_NODE_HAS_PROP(0, reset_gpios)
 	const struct gpio_dt_spec reset;
@@ -47,6 +53,21 @@ struct rrq_data {
 	uint8_t modem_buf[MODEM_RING_BUF_SIZE];
 	struct modem_cmd_handler_data cmd_handler_data;
 	uint8_t cmd_match_buf[MODEM_RECV_BUF_SIZE];
+
+	/* todo - put all of this in a struct called rrq_work ? */
+	struct k_work_q workq;
+	//struct k_work init_work;
+	//struct k_work_delayable ip_addr_work;
+	struct k_work scan_work;
+	//struct k_work connect_work;
+	//struct k_work disconnect_work;
+	//struct k_work iface_status_work;
+	//struct k_work mode_switch_work;
+	//struct k_work dns_work;
+
+	scan_result_cb_t scan_cb;
+
+	struct k_sem sem_response;
 };
 
 static const struct rrq_config rrq_driver_config = {
@@ -54,6 +75,16 @@ static const struct rrq_config rrq_driver_config = {
 	.reset = GPIO_DT_SPEC_INST_GET(0, reset_gpios),
 #endif
 };
+
+static inline int rrq_cmd_send(struct rrq_data *data,
+	const struct modem_cmd *handlers,
+	size_t handlers_len, const char *buf,
+	k_timeout_t timeout)
+{
+	return modem_cmd_send(&data->context.iface, &data->context.cmd_handler,
+				handlers, handlers_len, buf, &data->sem_response,
+				timeout);
+}
 
 /*
  * Modem Response Command Handlers
@@ -65,6 +96,149 @@ MODEM_CMD_DEFINE(on_cmd_ok)
 
 MODEM_CMD_DEFINE(on_cmd_error)
 {
+	return 0;
+}
+
+MODEM_CMD_DIRECT_DEFINE(on_cmd_wfscan)
+{
+	struct rrq_data *dev = CONTAINER_OF(data, struct rrq_data,
+		cmd_handler_data);
+	struct wifi_scan_result res = { 0 };
+	size_t match_len;
+
+
+	match_len = net_buf_data_match(data->rx_buf, 0, "+WFSCAN:", sizeof("+WFSCAN:") - 1);
+
+	if (match_len == (sizeof("+WFSCAN:") - 1))
+	{
+		if (dev->scan_cb) {
+			dev->scan_cb(dev->net_iface, 0, &res);
+		}
+	}
+//	size_t net_buf_data_match	(	const struct net_buf *	buf,
+//		size_t	offset,
+//		const void *	data,
+//		size_t	len )
+
+
+		/* Iterate over the table, and call the scan_result callback. */
+		//while (index < simplelink_data.num_results_or_err) {
+		//	z_simplelink_get_scan_result(index, &scan_result);
+		//	simplelink_data.cb(simplelink_data.iface, 0,
+		//			   &scan_result);
+			/* Yield, to ensure notifications get delivered:  */
+		//	k_yield();
+		//	index++;
+		//}
+
+		/* Sending a NULL entry indicates e/o results, and
+		 * triggers the NET_EVENT_WIFI_SCAN_DONE event:
+		 */
+		//simplelink_data.cb(simplelink_data.iface, 0, NULL);
+
+		/** SSID */
+		//uint8_t ssid[WIFI_SSID_MAX_LEN + 1];
+		/** SSID length */
+		//uint8_t ssid_length;
+		/** Frequency band */
+		//uint8_t band;
+		/** Channel */
+		//uint8_t channel;
+		/** Security type */
+		//enum wifi_security_type security;
+		/** WPA3 enterprise type */
+		//enum wifi_wpa3_enterprise_type wpa3_ent_type;
+		/** MFP options */
+		//enum wifi_mfp_options mfp;
+		/** RSSI */
+		//int8_t rssi;
+		/** BSSID */
+		//uint8_t mac[WIFI_MAC_ADDR_LEN];
+		/** BSSID length */
+		//uint8_t mac_length;
+
+	//if (dev->scan_cb) {
+	//	dev->scan_cb(dev->net_iface, 0, &res);
+	//}
+
+	/*
+	struct esp_data *dev = CONTAINER_OF(data, struct esp_data,
+					    cmd_handler_data);
+	struct wifi_scan_result res = { 0 };
+	char cwlap_buf[sizeof("\"0\",\"\",-100,\"xx:xx:xx:xx:xx:xx\",12") +
+		       WIFI_SSID_MAX_LEN * 2 + 1];
+	char *ecn;
+	char *ssid;
+	char *mac;
+	char *channel;
+	long rssi;
+	long ecn_id;
+	int err;
+
+	len = net_buf_linearize(cwlap_buf, sizeof(cwlap_buf) - 1,
+				data->rx_buf, 0, sizeof(cwlap_buf) - 1);
+	cwlap_buf[len] = '\0';
+
+	char *str = &cwlap_buf[sizeof("+CWJAP:(") - 1];
+	char *str_end = cwlap_buf + len;
+
+	err = esp_pull_raw(&str, str_end, &ecn);
+	if (err) {
+		return err;
+	}
+
+	ecn_id = strtol(ecn, NULL, 10);
+	if (ecn_id == 0) {
+		res.security = WIFI_SECURITY_TYPE_NONE;
+	} else {
+		res.security = WIFI_SECURITY_TYPE_PSK;
+	}
+
+	err = esp_pull_quoted(&str, str_end, &ssid);
+	if (err) {
+		return err;
+	}
+
+	err = esp_pull_long(&str, str_end, &rssi);
+	if (err) {
+		return err;
+	}
+
+	if (strlen(ssid) > WIFI_SSID_MAX_LEN) {
+		return -EBADMSG;
+	}
+
+	res.ssid_length = MIN(sizeof(res.ssid), strlen(ssid));
+	memcpy(res.ssid, ssid, res.ssid_length);
+
+	res.rssi = rssi;
+
+	if (IS_ENABLED(CONFIG_WIFI_ESP_AT_SCAN_MAC_ADDRESS)) {
+		err = esp_pull_quoted(&str, str_end, &mac);
+		if (err) {
+			return err;
+		}
+
+		res.mac_length = WIFI_MAC_ADDR_LEN;
+		if (net_bytes_from_str(res.mac, sizeof(res.mac), mac) < 0) {
+			LOG_ERR("Invalid MAC address");
+			res.mac_length = 0;
+		}
+	}
+
+	err = esp_pull_raw(&str, str_end, &channel);
+	if (err) {
+		return err;
+	}
+
+	res.channel = strtol(channel, NULL, 10);
+
+	if (dev->scan_cb) {
+		dev->scan_cb(dev->net_iface, 0, &res);
+	}
+
+	return str - cwlap_buf;
+*/
 	return 0;
 }
 
@@ -111,10 +285,56 @@ static const struct modem_cmd unsol_cmds[] = {
 
 struct rrq_data rrq_driver_data;
 
+static void rrq_mgmt_scan_work(struct k_work *work)
+{
+	struct rrq_data *dev;
+	int ret;
+	static const struct modem_cmd cmds[] = {
+		MODEM_CMD_DIRECT("+WFSCAN:", on_cmd_wfscan),
+	};
+
+	dev = CONTAINER_OF(work, struct rrq_data, scan_work);
+
+	//ret = esp_mode_flags_set(dev, EDF_STA_LOCK);
+	//if (ret < 0) {
+	//	goto out;
+	//}
+	ret = rrq_cmd_send(dev,
+			   cmds, ARRAY_SIZE(cmds),
+			   RRQ_CMD_WFSCAN,
+			   RRQ_SCAN_TIMEOUT);
+	//esp_mode_flags_clear(dev, EDF_STA_LOCK);
+	LOG_DBG("RRQ Wi-Fi scan: cmd = %s", RRQ_CMD_WFSCAN);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to scan: ret %d", ret);
+	}
+
+out:
+	dev->scan_cb(dev->net_iface, 0, NULL);
+	dev->scan_cb = NULL;
+}
+
 static int rrq_mgmt_scan(const struct device *dev,
 			 struct wifi_scan_params *params,
 			 scan_result_cb_t cb)
 {
+	struct rrq_data *data = dev->data;
+
+	ARG_UNUSED(params);
+
+	if (data->scan_cb != NULL) {
+		return -EINPROGRESS;
+	}
+
+	if (!net_if_is_carrier_ok(data->net_iface)) {
+		return -EIO;
+	}
+
+	data->scan_cb = cb;
+
+	k_work_submit_to_queue(&data->workq, &data->scan_work);
+
 	return 0;
 }
 
@@ -224,6 +444,16 @@ static int rrq_init(const struct device *dev)
 	struct rrq_data *data = dev->data;
 	int ret = 0;
 
+	k_sem_init(&data->sem_response, 0, 1);
+
+	k_work_init(&data->scan_work, rrq_mgmt_scan_work);
+
+	k_work_queue_start(&data->workq, rrq_workq_stack,
+		K_KERNEL_STACK_SIZEOF(rrq_workq_stack),
+		K_PRIO_COOP(CONFIG_WIFI_RRQ_AT_WORKQ_THREAD_PRIORITY),
+		NULL);
+	k_thread_name_set(&data->workq.thread, "rrq_workq");
+
 	const struct modem_cmd_handler_config cmd_handler_config = {
 		.match_buf = &data->cmd_match_buf[0],
 		.match_buf_len = sizeof(data->cmd_match_buf),
@@ -278,6 +508,8 @@ static int rrq_init(const struct device *dev)
 			K_PRIO_COOP(CONFIG_WIFI_RRQ_AT_RX_THREAD_PRIORITY), 0,
 			K_NO_WAIT);
 	k_thread_name_set(&rrq_rx_thread, "rrq_rx");
+
+	data->net_iface = NET_IF_GET(Z_DEVICE_DT_DEV_ID(DT_DRV_INST(0)), 0);
 
 	ret = rrq_reset(dev);
 

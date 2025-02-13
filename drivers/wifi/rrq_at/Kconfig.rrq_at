@@ -48,4 +48,18 @@ config WIFI_RRQ_AT_RX_THREAD_PRIORITY
 	help
 	  Priority of thread used for processing RX data.
 
+config WIFI_RRQ_AT_WORKQ_STACK_SIZE
+	int "Stack size for the esp driver work queue"
+	default 2048
+	help
+	  This stack is used by the work queue to pass off net_pkt data
+	  to the rest of the network stack, letting the rx thread continue
+	  processing data.
+
+config WIFI_RRQ_AT_WORKQ_THREAD_PRIORITY
+	int "Priority of work queue thread"
+	default 7
+	help
+	  Priority of thread used for processing driver work queue items.
+
 endif # WIFI_RRQ_AT
