@@ -91,6 +91,12 @@ static inline int rrq_cmd_send(struct rrq_data *data,
  */
 MODEM_CMD_DEFINE(on_cmd_ok)
 {
+	struct rrq_data *dev = CONTAINER_OF(data, struct rrq_data,
+		cmd_handler_data);
+
+	modem_cmd_handler_set_error(data, 0);
+	k_sem_give(&dev->sem_response);
+
 	return 0;
 }
 
@@ -99,6 +105,8 @@ MODEM_CMD_DEFINE(on_cmd_error)
 	return 0;
 }
 
+static uint8_t temp_buf[256];
+
 MODEM_CMD_DIRECT_DEFINE(on_cmd_wfscan)
 {
 	struct rrq_data *dev = CONTAINER_OF(data, struct rrq_data,
@@ -106,11 +114,13 @@ MODEM_CMD_DIRECT_DEFINE(on_cmd_wfscan)
 	struct wifi_scan_result res = { 0 };
 	size_t match_len;
 
-
 	match_len = net_buf_data_match(data->rx_buf, 0, "+WFSCAN:", sizeof("+WFSCAN:") - 1);
 
 	if (match_len == (sizeof("+WFSCAN:") - 1))
 	{
+		match_len = net_buf_linearize(temp_buf, sizeof(temp_buf) - 1,
+		data->rx_buf, 0, sizeof(temp_buf) - 1);
+
 		if (dev->scan_cb) {
 			dev->scan_cb(dev->net_iface, 0, &res);
 		}
