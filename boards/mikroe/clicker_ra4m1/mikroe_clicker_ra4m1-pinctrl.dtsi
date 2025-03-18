@@ -1,0 +1,18 @@
+/*
+ * Copyright (c) 2025 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&pinctrl {
+	sci0_default: sci0_default {
+		group1 {
+			/* tx */
+			psels = <RA_PSEL(RA_PSEL_SCI_0, 4, 11)>;
+		};
+		group2 {
+			/* rx */
+			psels = <RA_PSEL(RA_PSEL_SCI_0, 4, 10)>;
+		};
+	};
+};

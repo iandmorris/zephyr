@@ -9,6 +9,8 @@
 #include <zephyr/dt-bindings/gpio/gpio.h>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
 
+#include "mikroe_clicker_ra4m1-pinctrl.dtsi"
+
 / {
 	model = "Mikroe Clicker RA4M1";
 	compatible = "renesas,ra4m1", "renesas,ra";
@@ -68,19 +70,6 @@
 		led0 = &ld1;
 		led1 = &ld2;
 		sw0 = &btn1;
-	};
-};
-
-&pinctrl {
-	sci0_default: sci0_default {
-		group1 {
-			/* tx */
-			psels = <RA_PSEL(RA_PSEL_SCI_0, 4, 11)>;
-		};
-		group2 {
-			/* rx */
-			psels = <RA_PSEL(RA_PSEL_SCI_0, 4, 10)>;
-		};
 	};
 };
 
