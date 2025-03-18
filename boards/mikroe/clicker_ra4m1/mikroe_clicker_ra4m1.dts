@@ -83,6 +83,23 @@
 	};
 };
 
+&iic1 {
+	pinctrl-0 = <&iic1_default>;
+	pinctrl-names = "default";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <DT_FREQ_M(1)>;
+	interrupts = <10 1>, <11 1>, <12 1>, <13 1>;
+	interrupt-names = "rxi", "txi", "tei", "eri";
+	status = "okay";
+};
+
+&spi0 {
+	pinctrl-0 = <&spi0_default>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
 &ioport0 {
 	status = "okay";
 };
@@ -141,3 +158,7 @@
 &fclk {
 	div = <2>;
 };
+
+mikrobus_serial: &uart0 {};
+mikrobus_i2c: &iic1 {};
+mikrobus_spi: &spi0 {};
