@@ -138,6 +138,10 @@ manifest:
       path: tools/edtt
       groups:
         - tools
+    - name: erpc
+      revision: 9beb3c054d9398de2f7889da0bf17dc94bdc4cf8
+      url: https://github.com/EmbeddedRPC/erpc.git
+      path: modules/lib/erpc
     - name: fatfs
       revision: 16245c7c41d2b79e74984f49b5202551786b8a9b
       path: modules/fs/fatfs
@@ -344,6 +348,10 @@ manifest:
     - name: picolibc
       path: modules/lib/picolibc
       revision: 560946f26db075c296beea5b39d99e6de43c9010
+    - name: ra_rpc_service
+      revision: 30f98c4fac24e0f00c96635202ffb8f6ce437498
+      path: zephyr/drivers/wifi/renesas/ra_rpc/service
+      url: https://github.com/Renesas-US-Connectivity/ra_wifi_erpc_service
     - name: segger
       revision: cf56b1d9c80f81a26e2ac5727c9cf177116a4692
       path: modules/debug/segger

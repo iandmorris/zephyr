@@ -1,0 +1,322 @@
+/*
+ * Copyright (c) 2025 Renesas Electronics Corporation
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#define DT_DRV_COMPAT renesas_ra_rpc
+
+#include <stdlib.h>
+
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(wifi_ra_rpc, CONFIG_WIFI_LOG_LEVEL);
+
+#include <zephyr/net/wifi_mgmt.h>
+#include <zephyr/net/conn_mgr/connectivity_wifi_mgmt.h>
+#include <erpc_client_setup.h>
+#include <erpc_transport_setup.h>
+#include <erpc_mbf_setup.h>
+
+#include "ra_rpc.h"
+#include "c_wifi_client.h"
+
+K_KERNEL_STACK_DEFINE(ra_rpc_workq_stack,
+		      CONFIG_WIFI_RA_RPC_WORKQ_STACK_SIZE);
+
+struct ra_rpc_data ra_rpc_driver_data;
+
+static int ra_rpc_mgmt_scan(const struct device *dev,
+	struct wifi_scan_params *params,
+	scan_result_cb_t cb)
+{
+	struct ra_rpc_data *data = dev->data;
+
+	//enum wifi_scan_type scan_type;
+	/** Bitmap of bands to be scanned.
+	 *  Refer to ::wifi_frequency_bands for bit position of each band.
+	 */
+	//uint8_t bands;
+	/** Active scan dwell time (in ms) on a channel.
+	 */
+	//uint16_t dwell_time_active;
+	/** Passive scan dwell time (in ms) on a channel.
+	 */
+	//uint16_t dwell_time_passive;
+	/** Array of SSID strings to scan.
+	 */
+	//const char *ssids[WIFI_MGMT_SCAN_SSID_FILT_MAX];
+	/** Specifies the maximum number of scan results to return. These results would be the
+	 * BSSIDS with the best RSSI values, in all the scanned channels. This should only be
+	 * used to limit the number of returned scan results, and cannot be counted upon to limit
+	 * the scan time, since the underlying Wi-Fi chip might have to scan all the channels to
+	 * find the max_bss_cnt number of APs with the best signal strengths. A value of 0
+	 * signifies that there is no restriction on the number of scan results to be returned.
+	 */
+	//uint16_t max_bss_cnt;
+	/** Channel information array indexed on Wi-Fi frequency bands and channels within that
+	 * band.
+	 * E.g. to scan channel 6 and 11 on the 2.4 GHz band, channel 36 on the 5 GHz band:
+	 * @code{.c}
+	 *     chan[0] = {WIFI_FREQ_BAND_2_4_GHZ, 6};
+	 *     chan[1] = {WIFI_FREQ_BAND_2_4_GHZ, 11};
+	 *     chan[2] = {WIFI_FREQ_BAND_5_GHZ, 36};
+	 * @endcode
+	 *
+	 *  This list specifies the channels to be __considered for scan__. The underlying
+	 *  Wi-Fi chip can silently omit some channels due to various reasons such as channels
+	 *  not conforming to regulatory restrictions etc. The invoker of the API should
+	 *  ensure that the channels specified follow regulatory rules.
+	 */
+	//struct wifi_band_channel band_chan[WIFI_MGMT_SCAN_CHAN_MAX_MANUAL];
+
+	if (data->scan_cb != NULL) {
+		return -EINPROGRESS;
+	}
+
+	if (!net_if_is_carrier_ok(data->net_iface)) {
+		return -EIO;
+	}
+
+	data->scan_cb = cb;
+	data->scan_max_bss_cnt = params->max_bss_cnt;
+
+	k_work_submit_to_queue(&data->workq, &data->scan_work);
+
+	return 0;
+}
+
+static void ra_rpc_mgmt_scan_work(struct k_work *work)
+{
+	struct ra_rpc_data *dev;
+	struct wifi_scan_result entry;
+	WIFIScanResult_t *results;
+	WIFIReturnCode_t ret;
+	int i;
+
+	dev = CONTAINER_OF(work, struct ra_rpc_data, scan_work);
+
+	if (dev->scan_max_bss_cnt == 0) {
+		dev->scan_max_bss_cnt = CONFIG_WIFI_RA_RPC_MAX_BBS_COUNT;
+	}
+
+	results = malloc(dev->scan_max_bss_cnt * sizeof(WIFIScanResult_t));
+	if (results != NULL) {
+		memset(results, 0, dev->scan_max_bss_cnt * sizeof(WIFIScanResult_t));
+
+		ret = WIFI_Scan(results, dev->scan_max_bss_cnt);
+
+		if ((ret == eWiFiSuccess) || (ret == eWiFiTimeout)) {
+			for (i = 0; (results[i].ucSSIDLength != 0) && (i < dev->scan_max_bss_cnt); i++) {
+				if (results[i].ucSSIDLength < WIFI_SSID_MAX_LEN) {
+					entry.ssid_length = results[i].ucSSIDLength;
+					memcpy(entry.ssid, results[i].ucSSID, entry.ssid_length);
+				}
+
+				entry.channel = results[i].ucChannel;
+				entry.rssi = results[i].cRSSI;
+				entry.mac_length = WIFI_MAC_ADDR_LEN;
+				memcpy(entry.mac, results[i].ucBSSID, entry.mac_length);
+
+				// TODO - figure out if entry.band can be determined by looking at the channel...
+
+				// TODO - map security type from WIFISecurity_t to wifi_security_type and
+				// wifi_wpa3_enterprise_type...
+
+				dev->scan_cb(dev->net_iface, 0, &entry);
+			}
+		} else {
+			// TODO - pass back an error code?
+			dev->scan_cb(dev->net_iface, 0, NULL);
+		}
+		free(results);
+	}
+	dev->scan_cb = NULL;
+}
+
+static int ra_rpc_mgmt_connect(const struct device *dev,
+	struct wifi_connect_req_params *params)
+{
+	return 0;
+}
+
+static int ra_rpc_mgmt_disconnect(const struct device *dev)
+{
+	// TODO - handle return value
+	WIFI_Disconnect();
+
+	return 0;
+}
+
+static int ra_rpc_mgmt_iface_status(const struct device *dev,
+	struct wifi_iface_status *status)
+{
+	/** Interface state, see enum wifi_iface_state */
+	//int state;
+	/** Frequency band */
+	//enum wifi_frequency_bands band;
+	/** Interface mode, see enum wifi_iface_mode */
+	//enum wifi_iface_mode iface_mode;
+	/** Link mode, see enum wifi_link_mode */
+	//enum wifi_link_mode link_mode;
+	/** WPA3 enterprise type */
+	//enum wifi_wpa3_enterprise_type wpa3_ent_type;
+	/** Security type, see enum wifi_security_type */
+	//enum wifi_security_type security;
+	/** MFP options, see enum wifi_mfp_options */
+	//enum wifi_mfp_options mfp;
+	/** RSSI */
+	//int rssi;
+	/** DTIM period */
+	//unsigned char dtim_period;
+	/** Beacon interval */
+	//unsigned short beacon_interval;
+	/** is TWT capable? */
+	//bool twt_capable;
+	/** The current 802.11 PHY TX data rate (in Mbps) */
+	//int current_phy_tx_rate;
+
+	//WIFIConnectionInfo_t conn_info;
+
+	//if (WIFI_GetConnectionInfo(&conn_info) == eWiFiSuccess) {
+	//	status->channel = conn_info.ucChannel;
+	//	memcpy(status->bssid, conn_info.ucBSSID, WIFI_MAC_ADDR_LEN);
+	//	if (conn_info.ucSSIDLength < WIFI_SSID_MAX_LEN) {
+	//		status->ssid_len = conn_info.ucSSIDLength;
+	//		memcpy(status->ssid, conn_info.ucSSID, status->ssid_len);
+	//	}
+	//}
+
+	return 0;
+}
+
+static int ra_rpc_mgmt_reg_domain(const struct device *dev,
+	struct wifi_reg_domain *reg_domain)
+{
+//	struct wifi_reg_domain {
+//	/** Regulatory domain operation */
+//	enum wifi_mgmt_op oper;
+//	/** Ignore all other regulatory hints over this one, the behavior is
+//	 * implementation specific.
+//	 */
+//	bool force;
+//	/** Country code: ISO/IEC 3166-1 alpha-2 */
+//	uint8_t country_code[WIFI_COUNTRY_CODE_LEN];
+//	/** Number of channels supported */
+//	unsigned int num_channels;
+//	/** Channels information */
+//	struct wifi_reg_chan_info *chan_info;
+//};
+
+//enum wifi_mgmt_op {
+//	/** Get operation */
+//	WIFI_MGMT_GET = 0,
+//	/** Set operation */
+//	WIFI_MGMT_SET = 1,
+//};
+
+//struct wifi_reg_chan_info {
+//	/** Center frequency in MHz */
+//	unsigned short center_frequency;
+//	/** Maximum transmission power (in dBm) */
+//	unsigned short max_power:8;
+//	/** Is channel supported or not */
+//	unsigned short supported:1;
+//	/** Passive transmissions only */
+//	unsigned short passive_only:1;
+//	/** Is a DFS channel */
+//	unsigned short dfs:1;
+//} __packed;
+
+	return 0;
+}
+
+static enum offloaded_net_if_types ra_rpc_offload_get_type(void)
+{
+	return L2_OFFLOADED_NET_IF_TYPE_WIFI;
+}
+
+static void ra_rpc_iface_init(struct net_if *iface)
+{
+	ra_rpc_socket_offload_init(iface);
+
+	/* Not currently connected to a network */
+	net_if_dormant_on(iface);
+}
+
+static const struct wifi_mgmt_ops ra_rpc_mgmt_ops = {
+	.scan		   		= ra_rpc_mgmt_scan,
+	.connect	   		= ra_rpc_mgmt_connect,
+	.disconnect	   		= ra_rpc_mgmt_disconnect,
+	.iface_status  		= ra_rpc_mgmt_iface_status,
+	.reg_domain         = ra_rpc_mgmt_reg_domain,
+#ifdef CONFIG_WIFI_RA_RPC_SOFTAP_SUPPORT
+	.ap_enable     		= NULL,
+	.ap_disable    		= NULL,
+	.ap_sta_disconnect 	= NULL,
+	.ap_config_params   = NULL,
+#endif
+};
+
+static const struct net_wifi_mgmt_offload ra_rpc_api = {
+	.wifi_iface.iface_api.init = ra_rpc_iface_init,
+	.wifi_iface.get_type = ra_rpc_offload_get_type,
+	.wifi_mgmt_api = &ra_rpc_mgmt_ops,
+};
+
+static int ra_rpc_init(const struct device *dev);
+
+NET_DEVICE_DT_INST_OFFLOAD_DEFINE(0, ra_rpc_init, NULL,
+	&ra_rpc_driver_data, NULL,
+	CONFIG_WIFI_INIT_PRIORITY, &ra_rpc_api,
+	1500); // TODO - create a macro or config option for this?
+
+CONNECTIVITY_WIFI_MGMT_BIND(Z_DEVICE_DT_DEV_ID(DT_DRV_INST(0)));
+
+static int ra_rpc_init(const struct device *dev)
+{
+    erpc_transport_t transport;
+    erpc_mbf_t message_buffer_factory;
+    erpc_client_t client_manager;
+	struct ra_rpc_data *data = dev->data;
+
+	data->bus = DEVICE_DT_GET(DT_INST_BUS(0));
+
+	if (!device_is_ready(data->bus)) {
+		LOG_ERR("Bus device is not ready");
+		return -ENODEV;
+	}
+
+	k_work_init(&data->scan_work, ra_rpc_mgmt_scan_work);
+
+	/* Initialize the work queue */
+	k_work_queue_start(&data->workq, ra_rpc_workq_stack,
+			   K_KERNEL_STACK_SIZEOF(ra_rpc_workq_stack),
+			   K_PRIO_COOP(CONFIG_WIFI_RA_RPC_WORKQ_THREAD_PRIORITY),
+			   NULL);
+	k_thread_name_set(&data->workq.thread, "ra_rpc_workq");
+
+    /* Initialize the eRPC client infrastructure */
+    transport = erpc_transport_zephyr_uart_init(data->bus);
+	if (transport == NULL) {
+		LOG_ERR("Failed to initialize eRPC transport");
+		return -ENODEV;
+	}
+
+    message_buffer_factory = erpc_mbf_dynamic_init();
+	if (message_buffer_factory == NULL) {
+		LOG_ERR("Failed to initialize eRPC message buffer factory");
+		return -ENODEV;
+	}
+
+	client_manager = erpc_client_init(transport, message_buffer_factory);
+	if (client_manager == NULL) {
+		LOG_ERR("Failed to initialize eRPC client");
+		return -ENODEV;
+	}
+
+	initwifi_client(client_manager);
+
+	data->net_iface = NET_IF_GET(Z_DEVICE_DT_DEV_ID(DT_DRV_INST(0)), 0);
+
+	return 0;
+}
