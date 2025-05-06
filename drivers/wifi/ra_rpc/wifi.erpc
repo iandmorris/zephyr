@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2025 Renesas Electronics Corporation
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+const uint8 wificonfigMAX_SSID_LEN = (32)
+const uint8 wificonfigMAX_BSSID_LEN = (6)
+
+enum WIFIReturnCode_t
+{
+    eWiFiSuccess      = 0,             ///< Success
+    eWiFiFailure      = 1,             ///< Failure
+    eWiFiTimeout      = 2,             ///< Timeout
+    eWiFiNotSupported = 3,             ///< Not supported
+}
+
+enum WIFISecurity_t
+{
+    eWiFiSecurityOpen = 0,             ///< Open - No Security
+    eWiFiSecurityWEP,                  ///< WEP Security
+    eWiFiSecurityWPA,                  ///< WPA Security
+    eWiFiSecurityWPA2,                 ///< WPA2 Security
+    eWiFiSecurityWPA2_ent,             ///< WPA2 Enterprise Security
+    eWiFiSecurityWPA3,                 ///< WPA3 Security
+    eWiFiSecurityNotSupported          ///< Unknown Security
+}
+
+//typedef WIFINetworkParamsExt_t
+//{
+//    WIFINetworkParams_t xNetworkParams;      ///< Basic configuration
+//    WIFIEnterpriseNetParams_t xEntNetParams; ///< Enterprise security configuration
+//    WIFIBand_t ucBand;                       ///< Band to configure
+//    e_wifi_phy_mode_ext_t ucWiFi_mode;       ///< Wi-Fi PHY mode to configure (a, b, g ,n, ...)
+//    bool hidden_ssid;                        ///< AP is using hidden SSID
+//    WIFIPmf_t pmf;                           ///< Protected Management Frame mode
+//    char sae_groups[wificonfigMAX_SAE_GROUPS_LEN]; ///< String contains all the WPA3 sae group ids
+//}
+
+struct WIFIScanResult_t
+{
+    uint8[wificonfigMAX_SSID_LEN]  ucSSID;       ///< SSID of the Wi-Fi network (binary array, not C-string)
+    uint8                          ucSSIDLength; ///< SSID length
+    uint8[wificonfigMAX_BSSID_LEN] ucBSSID;      ///< BSSID of the Wi-Fi network (binary array, not C-string)
+    WIFISecurity_t                 xSecurity;    ///< Security type of the Wi-Fi network
+    int8                           cRSSI;        ///< Signal strength of the Wi-Fi network
+    uint8                          ucChannel;    ///< Channel of the Wi-Fi network
+}
+
+interface wifi {
+    WIFI_Scan(out WIFIScanResult_t pxBuffer, uint8 ucNumNetworks) -> WIFIReturnCode_t
+//	WIFI_ConnectAPExt(WIFINetworkParamsExt_t pxNetworkParamsExt) -> WIFIReturnCode_t
+}
