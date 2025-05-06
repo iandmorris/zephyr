@@ -1,0 +1,180 @@
+/*
+ * Copyright (c) 2025 Renesas Electronics Corporation
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+const uint8 wificonfigMAX_SSID_LEN 			= (32)
+const uint8 wificonfigMAX_BSSID_LEN 		= (6)
+const uint8 wificonfigMAX_PASSPHRASE_LEN 	= (128)
+const uint8 wificonfigMAX_WEPKEYS		 	= (4)
+const uint8 wificonfigMAX_WEPKEY_LEN		= (26)
+const uint8 wificonfigMAX_SAE_GROUPS_LEN	= (20)
+const uint8 wificonfigMAX_ENT_IDENTITY_LEN  = (32)
+const uint8 wificonfigMAX_ENT_PASSWORD_LEN  = (32)
+const uint16 wificonfigMAX_CERT_LEN         = (4096)
+const uint16 wificonfigMAX_PRIV_KEY_LEN		= (4096)
+
+enum WIFIReturnCode_t
+{
+    eWiFiSuccess      = 0,             ///< Success
+    eWiFiFailure      = 1,             ///< Failure
+    eWiFiTimeout      = 2,             ///< Timeout
+    eWiFiNotSupported = 3,             ///< Not supported
+}
+
+enum WIFISecurity_t
+{
+    eWiFiSecurityOpen = 0,             ///< Open - No Security
+    eWiFiSecurityWEP,                  ///< WEP Security
+    eWiFiSecurityWPA,                  ///< WPA Security
+    eWiFiSecurityWPA2,                 ///< WPA2 Security
+    eWiFiSecurityWPA2_ent,             ///< WPA2 Enterprise Security
+    eWiFiSecurityWPA3,                 ///< WPA3 Security
+    eWiFiSecurityNotSupported          ///< Unknown Security
+}
+
+enum WIFIBand_t
+{
+    eWiFiBand2G = 0,                   ///< 2.4G band
+    eWiFiBand5G,                       ///< 5G band
+    eWiFiBandDual,                     ///< Dual band
+    eWiFiBandMax                       ///< Unsupported
+}
+
+enum WIFIPmf_t
+{
+    PMF_NONE,
+    PMF_CAPABLE,
+    PMF_REQUIRED,
+    PMF_DEFAULT,
+}
+
+enum WIFIEntAuthTypeExt_t
+{
+    ENT_AUTH_TYPE_NONE               = 0,
+    ENT_AUTH_TYPE_PEAP_TTLS_FAST,
+    ENT_AUTH_TYPE_PEAP,
+    ENT_AUTH_TYPE_TTLS,
+    ENT_AUTH_TYPE_FAST,
+    ENT_AUTH_TYPE_TLS,
+    ENT_AUTH_TYPE_UNSUPPORTED,
+}
+
+enum WIFIEntAuthProtoExt_t
+{
+    ENT_AUTH_PROTO_NONE              = 0,
+    ENT_AUTH_PROTO_MSCHAPv2_GTC,
+    ENT_AUTH_PROTO_MSCHAPv2,
+    ENT_AUTH_PROTO_GTC,
+    ENT_AUTH_PROTO_TLS,
+    ENT_AUTH_PROTO_UNSUPPORTED,
+}
+
+enum e_wifi_phy_mode_ext_t
+{
+    WIFI_PHY_MODE_AUTO_STA,  /* 0 */ /* Station 11b/g/n/ax/a/n(5G) */
+    WIFI_PHY_MODE_BGN = 0,   /* 0 */ /* SoftAP */
+    WIFI_PHY_MODE_GN,        /* 1 */
+    WIFI_PHY_MODE_BG,        /* 2 */
+    WIFI_PHY_MODE_N_ONLY,    /* 3 */
+    WIFI_PHY_MODE_G_ONLY,    /* 4 */
+    WIFI_PHY_MODE_B_ONLY,    /* 5 */
+    // 5 GHz
+    WIFI_PHY_MODE_AN,        /* 6 */
+    WIFI_PHY_MODE_A_ONLY,    /* 7 */
+    WIFI_PHY_MODE_N_ONLY_5G, /* 8 */
+    WIFI_PHY_MODE_MAX
+}
+
+struct WIFINetworkParams_t
+{
+    uint8[wificonfigMAX_SSID_LEN] 	ucSSID;       			///< SSID of the Wi-Fi network (binary array, not C-string)
+    uint8        					ucSSIDLength; 			///< SSID length
+    WIFISecurity_t 					xSecurity;    			///< Wi-Fi Security
+    //union (xPassword)
+	//{
+    //    WIFIWEPKey_t[wificonfigMAX_WEPKEYS]	xWEP; 		///< WEP keys
+    //    WIFIWPAPassphrase_t 				xWPA; 			///< WPA/WPA2 passphrase
+    //} xPasswordData;
+    uint8 							ucDefaultWEPKeyIndex;	///< Default WEP key index
+    uint8 							ucChannel;              ///< Channel number
+}
+
+struct WIFIEnterpriseNetParams_t
+{
+    WIFIEntAuthTypeExt_t 					ucEntAuthType;
+    WIFIEntAuthProtoExt_t 					ucEntAuthProto;
+    uint8[wificonfigMAX_ENT_IDENTITY_LEN] 	ucID;
+    uint8 									ucIDLength;
+    uint8[wificonfigMAX_ENT_PASSWORD_LEN]	ucPassword;
+    uint8 									ucPasswordLength;
+    uint8[wificonfigMAX_CERT_LEN] 			ucCert;
+    uint16 									ucCertLength;
+    uint8[wificonfigMAX_PRIV_KEY_LEN] 		ucPrivKey;
+    uint8 									ucPrivKeyLength;
+}
+
+struct WIFINetworkParamsExt_t
+{
+    WIFINetworkParams_t 				xNetworkParams; ///< Basic configuration
+    WIFIEnterpriseNetParams_t 			xEntNetParams; 	///< Enterprise security configuration
+    WIFIBand_t 							ucBand;         ///< Band to configure
+    e_wifi_phy_mode_ext_t 				ucWiFi_mode;    ///< Wi-Fi PHY mode to configure (a, b, g ,n, ...)
+    bool 								hidden_ssid;    ///< AP is using hidden SSID
+    WIFIPmf_t 							pmf;            ///< Protected Management Frame mode
+    uint8[wificonfigMAX_SAE_GROUPS_LEN] sae_groups;		///< String contains all the WPA3 sae group ids
+}
+
+struct  WIFIScanConfig_t
+{
+    uint8 [wificonfigMAX_SSID_LEN] ucSSID; 	///< SSID for targeted scan (binary array, not C-string)
+    uint8 ucSSIDLength;                   	///< SSID length, 0 if broadcast scan
+    uint8 ucChannel;                      	///< Channel to scan (0 means all channels)
+}
+
+struct WIFIScanExtendedConfig_t
+{
+    WIFIScanConfig_t pxScanConfig; ///< Wi-Fi scan configuration
+    WIFIBand_t       ucBand;       ///< Band to scan
+}
+
+struct WIFIConnectionInfo_t
+{
+    uint8[wificonfigMAX_SSID_LEN]  ucSSID;       ///< SSID of the Wi-Fi network (binary array, not C-string)
+    uint8                          ucSSIDLength; ///< SSID length
+    uint8[wificonfigMAX_BSSID_LEN] ucBSSID;      ///< BSSID of the Wi-Fi network (binary array, not C-string)
+    WIFISecurity_t                 xSecurity;    ///< Wi-Fi Security
+    uint8                          ucChannel;    ///< Channel info
+}
+
+struct WIFIScanResult_t
+{
+    uint8[wificonfigMAX_SSID_LEN]  ucSSID;       ///< SSID of the Wi-Fi network (binary array, not C-string)
+    uint8                          ucSSIDLength; ///< SSID length
+    uint8[wificonfigMAX_BSSID_LEN] ucBSSID;      ///< BSSID of the Wi-Fi network (binary array, not C-string)
+    WIFISecurity_t                 xSecurity;    ///< Security type of the Wi-Fi network
+    int8                           cRSSI;        ///< Signal strength of the Wi-Fi network
+    uint8                          ucChannel;    ///< Channel of the Wi-Fi network
+}
+
+struct WIFIWEPKey_t
+{
+    uint8[wificonfigMAX_WEPKEY_LEN]	cKey; 		///< WEP key (binary array, not C-string)
+    uint8 							ucLength;   ///< Key length
+}
+
+struct WIFIWPAPassphrase_t
+{
+    uint8[wificonfigMAX_PASSPHRASE_LEN]	cPassphrase; ///< WPA passphrase (binary array, not C-string)
+    uint8								ucLength;    ///< Passphrase length (must be between 8 and 64 inclusive)
+}
+
+interface wifi {
+	WIFI_Scan(out WIFIScanResult_t pxBuffer, uint8 ucNumNetworks) -> WIFIReturnCode_t
+	WIFI_ScanExtended(out WIFIScanResult_t pxBuffer, uint8 ucNumNetworks, WIFIScanExtendedConfig_t pxScanConfigExtended) -> WIFIReturnCode_t
+	WIFI_ConnectAP(WIFINetworkParams_t pxNetworkParams) -> WIFIReturnCode_t
+	WIFI_ConnectAPExt(WIFINetworkParamsExt_t pxNetworkParamsExt) -> WIFIReturnCode_t
+	WIFI_Disconnect() -> WIFIReturnCode_t
+	WIFI_GetConnectionInfo(out WIFIConnectionInfo_t pxConnectionInfo) -> WIFIReturnCode_t
+}
