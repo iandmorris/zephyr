@@ -1,0 +1,12 @@
+# Copyright (c) 2025 Renesas Electronics Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+description: Renesas WiFi modem (AT Command)
+
+compatible: "renesas,ra-at"
+
+include: uart-device.yaml
+
+properties:
+  reset-gpios:
+    type: phandle-array

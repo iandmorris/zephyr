@@ -46,5 +46,6 @@ source "drivers/wifi/infineon/Kconfig.airoc"
 source "drivers/wifi/nrf_wifi/Kconfig.nrfwifi"
 source "drivers/wifi/siwx91x/Kconfig.siwx91x"
 source "drivers/wifi/renesas/ra_rpc/Kconfig.ra_rpc"
+source "drivers/wifi/renesas/ra_at/Kconfig.ra_at"
 
 endif # WIFI
