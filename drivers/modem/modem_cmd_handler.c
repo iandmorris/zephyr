@@ -329,6 +329,8 @@ static void cmd_handler_process_rx_buf(struct modem_cmd_handler_data *data)
 	int ret;
 	uint16_t offset, len;
 
+	//LOG_INF("cmd_handler_process_rx_buf - %d bytes", data->rx_buf->len);
+
 	/* process all of the data in the net_buf */
 	while (data->rx_buf && data->rx_buf->len) {
 		skipcrlf(data);
