@@ -107,7 +107,12 @@ static void ra_rpc_mgmt_scan_work(struct k_work *work)
 
 		if ((ret == eWiFiSuccess) || (ret == eWiFiTimeout)) {
 			for (i = 0; (results[i].ucSSIDLength != 0) && (i < dev->scan_max_bss_cnt); i++) {
-				if (results[i].ucSSIDLength < WIFI_SSID_MAX_LEN) {
+				memset(&entry, 0, sizeof(struct wifi_scan_result));
+
+				/* Ensure there is space for a NULL terminating character, we
+				   don't need to explicity add this as the array has already
+				   been zeroed. */
+				if (results[i].ucSSIDLength <= (WIFI_SSID_MAX_LEN - 1)) {
 					entry.ssid_length = results[i].ucSSIDLength;
 					memcpy(entry.ssid, results[i].ucSSID, entry.ssid_length);
 				}
