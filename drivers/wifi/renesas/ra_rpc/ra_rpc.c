@@ -85,6 +85,26 @@ static int ra_rpc_mgmt_scan(const struct device *dev,
 	return 0;
 }
 
+static inline enum wifi_security_type drv_to_wifi_mgmt(int drv_security_type)
+{
+	switch (drv_security_type) {
+	case eWiFiSecurityOpen:
+		return WIFI_SECURITY_TYPE_NONE;
+	case eWiFiSecurityWEP:
+		return WIFI_SECURITY_TYPE_WEP;
+	case eWiFiSecurityWPA:
+		return WIFI_SECURITY_TYPE_WPA_PSK;
+	case eWiFiSecurityWPA2:
+		return WIFI_SECURITY_TYPE_PSK;
+	case eWiFiSecurityWPA2_ent:
+		return WIFI_SECURITY_TYPE_PSK_SHA256;
+	case eWiFiSecurityWPA3:
+		return WIFI_SECURITY_TYPE_SAE;
+	default:
+		return WIFI_SECURITY_TYPE_UNKNOWN;
+	}
+}
+
 static void ra_rpc_mgmt_scan_work(struct k_work *work)
 {
 	struct ra_rpc_data *dev;
@@ -109,24 +129,36 @@ static void ra_rpc_mgmt_scan_work(struct k_work *work)
 			for (i = 0; (results[i].ucSSIDLength != 0) && (i < dev->scan_max_bss_cnt); i++) {
 				memset(&entry, 0, sizeof(struct wifi_scan_result));
 
-				/* Ensure there is space for a NULL terminating character, we
-				   don't need to explicity add this as the array has already
-				   been zeroed. */
-				if (results[i].ucSSIDLength <= (WIFI_SSID_MAX_LEN - 1)) {
-					entry.ssid_length = results[i].ucSSIDLength;
-					memcpy(entry.ssid, results[i].ucSSID, entry.ssid_length);
+				if (results[i].ucSSIDLength <= WIFI_SSID_MAX_LEN) {
+					/* Tab character signifies hidden SSID */
+					if (results[i].ucSSID[0] != '\t') {
+						entry.ssid_length = results[i].ucSSIDLength;
+						memcpy(entry.ssid, results[i].ucSSID, entry.ssid_length);
+					}
 				}
 
+				entry.security = drv_to_wifi_mgmt(results[i].xSecurity);
 				entry.channel = results[i].ucChannel;
 				entry.rssi = results[i].cRSSI;
 				entry.mac_length = WIFI_MAC_ADDR_LEN;
 				memcpy(entry.mac, results[i].ucBSSID, entry.mac_length);
-
-				// TODO - figure out if entry.band can be determined by looking at the channel...
-
-				// TODO - map security type from WIFISecurity_t to wifi_security_type and
-				// wifi_wpa3_enterprise_type...
-
+				if (entry.channel > 14) {
+					entry.band = WIFI_FREQ_BAND_5_GHZ;
+				}
+/*
+	struct wifi_scan_result {
+		uint8_t ssid[WIFI_SSID_MAX_LEN + 1];			// DONE
+		uint8_t ssid_length;							// DONE
+		uint8_t band;									// DONE
+		uint8_t channel;								// DONE
+		enum wifi_security_type security;				// DONE
+		enum wifi_wpa3_enterprise_type wpa3_ent_type;
+		enum wifi_mfp_options mfp;
+		int8_t rssi;									// DONE
+		uint8_t mac[WIFI_MAC_ADDR_LEN];					// DONE
+		uint8_t mac_length;								// DONE
+	};
+*/
 				dev->scan_cb(dev->net_iface, 0, &entry);
 			}
 		} else {
