@@ -8,6 +8,7 @@
 #define ZEPHYR_INCLUDE_DRIVERS_WIFI_RENESAS_RA_RPC_H_
 
 #include <zephyr/net/wifi_mgmt.h>
+#include "wifi_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,9 +19,11 @@ struct ra_rpc_data {
 	struct net_if *net_iface;
 	scan_result_cb_t scan_cb;
 	uint16_t scan_max_bss_cnt;
+	struct WIFINetworkParams_t *drv_nwk_params;
 
 	struct k_work_q workq;
 	struct k_work scan_work;
+	struct k_work connect_work;
 };
 
 int ra_rpc_socket_offload_init(struct net_if *iface);

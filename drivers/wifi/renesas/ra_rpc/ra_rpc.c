@@ -85,7 +85,7 @@ static int ra_rpc_mgmt_scan(const struct device *dev,
 	return 0;
 }
 
-static inline enum wifi_security_type drv_to_wifi_mgmt(int drv_security_type)
+static inline enum wifi_security_type drv_to_wifi_mgmt_sec(int drv_security_type)
 {
 	switch (drv_security_type) {
 	case eWiFiSecurityOpen:
@@ -102,6 +102,26 @@ static inline enum wifi_security_type drv_to_wifi_mgmt(int drv_security_type)
 		return WIFI_SECURITY_TYPE_SAE;
 	default:
 		return WIFI_SECURITY_TYPE_UNKNOWN;
+	}
+}
+
+static inline enum WIFISecurity_t wifi_mgmt_to_drv_sec(int wifi_mgmt_security_type)
+{
+	switch (wifi_mgmt_security_type) {
+	case WIFI_SECURITY_TYPE_NONE:
+		return eWiFiSecurityOpen;
+	case WIFI_SECURITY_TYPE_WEP:
+		return eWiFiSecurityWEP;
+	case WIFI_SECURITY_TYPE_WPA_PSK:
+		return eWiFiSecurityWPA;
+	case WIFI_SECURITY_TYPE_PSK:
+		return eWiFiSecurityWPA2;
+	case WIFI_SECURITY_TYPE_PSK_SHA256:
+		return eWiFiSecurityWPA2_ent;
+	case  WIFI_SECURITY_TYPE_SAE:
+		return eWiFiSecurityWPA3;
+	default:
+		return eWiFiSecurityNotSupported;
 	}
 }
 
@@ -137,7 +157,7 @@ static void ra_rpc_mgmt_scan_work(struct k_work *work)
 					}
 				}
 
-				entry.security = drv_to_wifi_mgmt(results[i].xSecurity);
+				entry.security = drv_to_wifi_mgmt_sec(results[i].xSecurity);
 				entry.channel = results[i].ucChannel;
 				entry.rssi = results[i].cRSSI;
 				entry.mac_length = WIFI_MAC_ADDR_LEN;
@@ -160,10 +180,11 @@ static void ra_rpc_mgmt_scan_work(struct k_work *work)
 	};
 */
 				dev->scan_cb(dev->net_iface, 0, &entry);
+				k_yield();
 			}
 		} else {
 			// TODO - pass back an error code?
-			dev->scan_cb(dev->net_iface, 0, NULL);
+			dev->scan_cb(dev->net_iface, -1, NULL);
 		}
 		free(results);
 	}
@@ -173,7 +194,131 @@ static void ra_rpc_mgmt_scan_work(struct k_work *work)
 static int ra_rpc_mgmt_connect(const struct device *dev,
 	struct wifi_connect_req_params *params)
 {
+#if 0
+struct WIFINetworkParamsExt_t
+{
+    WIFINetworkParams_t 				  xNetworkParams; ///< Basic configuration
+    WIFIEnterpriseNetParams_t 			  xEntNetParams; 	///< Enterprise security configuration
+    WIFIBand_t 							  ucBand;         ///< Band to configure
+    e_ra_eprc_wifi_phy_mode_ext_t 		  ucWiFi_mode;    ///< Wi-Fi PHY mode to configure (a, b, g ,n, ...)
+    bool 								  hidden_ssid;    ///< AP is using hidden SSID
+    WIFIPmf_t 							  pmf;            ///< Protected Management Frame mode
+    uint8[k_wificonfigMAX_SAE_GROUPS_LEN] sae_groups;		///< String contains all the WPA3 sae group ids
+}
+
+struct wifi_connect_req_params {
+	/** SSID */
+	const uint8_t *ssid;
+	/** SSID length */
+	uint8_t ssid_length; /* Max 32 */
+	/** Pre-shared key */
+	const uint8_t *psk;
+	/** Pre-shared key length */
+	uint8_t psk_length; /* Min 8 - Max 64 */
+	/** SAE password (same as PSK but with no length restrictions), optional */
+	const uint8_t *sae_password;
+	/** SAE password length */
+	uint8_t sae_password_length; /* No length restrictions */
+	/** Frequency band */
+	uint8_t band;
+	/** Channel */
+	uint8_t channel;
+	/** Security type */
+	enum wifi_security_type security;
+	/** MFP options */
+	enum wifi_mfp_options mfp;
+	/** BSSID */
+	uint8_t bssid[WIFI_MAC_ADDR_LEN];
+	/** Connect timeout in seconds, SYS_FOREVER_MS for no timeout */
+	int timeout;
+	/** anonymous identity */
+	const uint8_t *anon_id;
+	/** anon_id length, max 64 */
+	uint8_t aid_length;
+	/** Private key passwd for enterprise mode */
+	const uint8_t *key_passwd;
+	/** Private key passwd length, max 128 */
+	uint8_t key_passwd_length;
+	/** private key2 passwd */
+	const uint8_t *key2_passwd;
+	/** key2 passwd length, max 128 */
+	uint8_t key2_passwd_length;
+	/** wpa3 enterprise mode */
+	enum wifi_wpa3_enterprise_type wpa3_ent_mode;
+	/** TLS cipher */
+	uint8_t TLS_cipher;
+	/** eap version */
+	int eap_ver;
+	/** Identity for EAP */
+	const uint8_t *eap_identity;
+	/** eap identity length, max 64 */
+	uint8_t eap_id_length;
+	/** Password string for EAP. */
+	const uint8_t *eap_password;
+	/** eap passwd length, max 128 */
+	uint8_t eap_passwd_length;
+	/** Whether verify peer with CA or not: false-not verify, true-verify. */
+	bool verify_peer_cert;
+	/** Fast BSS Transition used */
+	bool ft_used;
+	/** Number of EAP users */
+	int nusers;
+	/** Number of EAP passwds */
+	uint8_t passwds;
+	/** User Identities */
+	const uint8_t *identities[WIFI_ENT_IDENTITY_MAX_USERS];
+	/** User Passwords */
+	const uint8_t *passwords[WIFI_ENT_IDENTITY_MAX_USERS];
+	/** Hidden SSID configure
+	 * 0: disabled (default)
+	 * 1: send empty (length=0) SSID in beacon and ignore probe request for broadcast SSID
+	 * 2: clear SSID, but keep the original length and ignore probe request for broadcast SSID
+	 */
+	uint8_t ignore_broadcast_ssid;
+	/** Parameter used for frequency band */
+	enum wifi_frequency_bandwidths bandwidth;
+};
+
+#endif
+
+	struct ra_rpc_data *data = dev->data;
+
+	data->drv_nwk_params = malloc(sizeof(WIFINetworkParams_t));
+
+	if (data->drv_nwk_params) {
+
+		data->drv_nwk_params->xPassword.xWPA.ucLength = MIN(params->psk_length, sizeof(data->drv_nwk_params->xPassword.xWPA.cPassphrase));
+		memcpy(data->drv_nwk_params->xPassword.xWPA.cPassphrase, params->psk, data->drv_nwk_params->xPassword.xWPA.ucLength);
+
+		//data->drv_nwk_params->ucBand = params->band;
+		data->drv_nwk_params->ucChannel = params->channel;
+		data->drv_nwk_params->ucSSIDLength = MIN(params->ssid_length, sizeof(data->drv_nwk_params->ucSSID));
+		memcpy(data->drv_nwk_params->ucSSID, params->ssid, data->drv_nwk_params->ucSSIDLength);
+		data->drv_nwk_params->xSecurity = wifi_mgmt_to_drv_sec(params->security);
+
+		k_work_submit_to_queue(&data->workq, &data->connect_work);
+	}
+
+	// TODO return value based on checking of passed parameters...?
 	return 0;
+}
+
+static void ra_rpc_mgmt_connect_work(struct k_work *work)
+{
+	struct ra_rpc_data *dev;
+	WIFIReturnCode_t ret;
+	int status = 0;
+
+	dev = CONTAINER_OF(work, struct ra_rpc_data, connect_work);
+
+	ret = WIFI_ConnectAP(dev->drv_nwk_params);
+
+	free(dev->drv_nwk_params);
+
+	if (ret) {
+		status = -1;
+	}
+	wifi_mgmt_raise_connect_result_event(dev->net_iface, status);
 }
 
 static int ra_rpc_mgmt_disconnect(const struct device *dev)
@@ -324,6 +469,7 @@ static int ra_rpc_init(const struct device *dev)
 	}
 
 	k_work_init(&data->scan_work, ra_rpc_mgmt_scan_work);
+	k_work_init(&data->connect_work, ra_rpc_mgmt_connect_work);
 
 	/* Initialize the work queue */
 	k_work_queue_start(&data->workq, ra_rpc_workq_stack,
