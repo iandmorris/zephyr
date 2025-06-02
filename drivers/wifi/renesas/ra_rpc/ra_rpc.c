@@ -149,6 +149,8 @@ static void ra_rpc_mgmt_scan_work(struct k_work *work)
 		}
 		free(results);
 	}
+
+	dev->scan_cb(dev->net_iface, 0, NULL);
 	dev->scan_cb = NULL;
 }
 
