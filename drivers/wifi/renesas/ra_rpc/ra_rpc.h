@@ -19,11 +19,14 @@ struct ra_rpc_data {
 	struct net_if *net_iface;
 	scan_result_cb_t scan_cb;
 	uint16_t scan_max_bss_cnt;
-	struct WIFINetworkParams_t *drv_nwk_params;
+	struct WIFINetworkParams_t drv_nwk_params;
+	struct wifi_iface_status *wifi_status;
 
 	struct k_work_q workq;
 	struct k_work scan_work;
 	struct k_work connect_work;
+	struct k_work disconnect_work;
+	struct k_work iface_status_work;
 };
 
 int ra_rpc_socket_offload_init(struct net_if *iface);

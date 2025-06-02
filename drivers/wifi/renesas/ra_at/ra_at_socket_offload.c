@@ -36,6 +36,8 @@ static int ra_connect(struct net_context *context,
 		       int32_t timeout,
 		       void *user_data)
 {
+	LOG_INF("ra_connect");
+
 	return 0;
 }
 
@@ -53,6 +55,8 @@ static int ra_sendto(struct net_pkt *pkt,
 		      int32_t timeout,
 		      void *user_data)
 {
+	LOG_INF("ra_sendto");
+
 	return 0;
 }
 

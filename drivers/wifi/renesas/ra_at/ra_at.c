@@ -19,6 +19,8 @@ LOG_MODULE_REGISTER(wifi_ra_at, CONFIG_WIFI_LOG_LEVEL);
 #define RA_AT_CMD_WFSCAN		"AT+WFSCAN"
 #define RA_AT_CMD_VER			"AT+VER"
 #define RA_AT_SCAN_TIMEOUT		K_SECONDS(10)
+#define RA_AT_CMD_WFJAP			"AT+WFJAP"
+#define RA_AT_CONNECT_TIMEOUT	K_SECONDS(10)
 
 #include <stdlib.h>
 #include <zephyr/drivers/gpio.h>
@@ -63,8 +65,8 @@ struct ra_at_data {
 	//struct k_work_delayable ip_addr_work;
 	struct k_work scan_work;
 	struct k_work get_version_work;
-	//struct k_work connect_work;
-	//struct k_work disconnect_work;
+	struct k_work connect_work;
+	struct k_work disconnect_work;
 	//struct k_work iface_status_work;
 	//struct k_work mode_switch_work;
 	//struct k_work dns_work;
@@ -76,10 +78,14 @@ struct ra_at_data {
 	char *last;
 	uint16_t scan_max_bss_cnt;
 
+	// TODO - fix magic number
+	char conn_cmd[256];
+
 	struct k_sem sem_response;
 	struct k_sem get_version_sem;
 	struct k_sem sem_if_up;
 
+	// TODO - fix magic number
 	uint8_t drv_version[32];
 };
 
@@ -107,6 +113,8 @@ MODEM_CMD_DEFINE(on_cmd_ok)
 	struct ra_at_data *dev = CONTAINER_OF(data, struct ra_at_data,
 		cmd_handler_data);
 
+	LOG_INF("OK");
+
 	modem_cmd_handler_set_error(data, 0);
 	k_sem_give(&dev->sem_response);
 
@@ -115,6 +123,8 @@ MODEM_CMD_DEFINE(on_cmd_ok)
 
 MODEM_CMD_DEFINE(on_cmd_error)
 {
+	LOG_INF("ERROR");
+
 	return 0;
 }
 
@@ -131,6 +141,7 @@ MODEM_CMD_DIRECT_DEFINE(on_cmd_get_version)
 
 	len = net_buf_linearize(version_buf, sizeof(version_buf) - 1,
 				data->rx_buf, 0, sizeof(version_buf) - 1);
+	// TODO - fix magic number
 	version_buf[len - 5] = '\0';
 
 	LOG_INF("on_cmd_get_version: %d %s", len, version_buf);
@@ -143,7 +154,11 @@ MODEM_CMD_DIRECT_DEFINE(on_cmd_get_version)
 
 	k_sem_give(&dev->get_version_sem);
 
+	// TODO - fix magic number
+	LOG_INF("done: %d", sizeof(version_buf) - 5);
+
 	return sizeof(version_buf) - 5;
+	//return sizeof(version_buf);
 }
 
 static uint8_t freq_to_chan(int frequency)
@@ -217,6 +232,13 @@ enum wifi_security_type get_sec_from_flags (char *flags)
 	return sec;
 }
 
+MODEM_CMD_DIRECT_DEFINE(on_cmd_connect)
+{
+	struct ra_at_data *dev = CONTAINER_OF(data, struct ra_at_data, cmd_handler_data);
+
+	LOG_INF("on_cmd_connect");
+}
+
 MODEM_CMD_DIRECT_DEFINE(on_cmd_wfscan)
 {
 	int err;
@@ -224,10 +246,10 @@ MODEM_CMD_DIRECT_DEFINE(on_cmd_wfscan)
 	char *next;
 	char *curr;
 	char *end;
-	static struct wifi_scan_result res = { 0 };
+	static struct wifi_scan_result res;
 	struct ra_at_data *dev = CONTAINER_OF(data, struct ra_at_data, cmd_handler_data);
 
-	LOG_INF("on_cmd_wfscan: rxd %d", data->rx_buf->len);
+	//LOG_INF("rxd %d", data->rx_buf->len);
 
 	/*
 	   Response is formatted as follows:
@@ -239,7 +261,9 @@ MODEM_CMD_DIRECT_DEFINE(on_cmd_wfscan)
 	*/
 	len = net_buf_linearize(dev->scan_rsp_buf, sizeof(dev->scan_rsp_buf) - 1, data->rx_buf, 0, sizeof(dev->scan_rsp_buf) - 1);
 
-	LOG_INF("%s", dev->scan_rsp_buf);
+	//LOG_INF("len %d", len);
+
+	//LOG_INF("%s", dev->scan_rsp_buf);
 
 	// TODO what if above won't fit in buffer, what error is returned and waht to do with it?
 
@@ -266,6 +290,7 @@ MODEM_CMD_DIRECT_DEFINE(on_cmd_wfscan)
 	do {
 		// TODO - check we have not received <CR>
 		// TODO - what about response with no results..?
+		memset(&res, 0, sizeof(struct wifi_scan_result));
 
 		/* Find end of first parameter (bssid) so we know it's all in the buffer */
 		next = strchr(curr, '\t');
@@ -325,9 +350,11 @@ MODEM_CMD_DIRECT_DEFINE(on_cmd_wfscan)
 		}
 		*next = '\0';
 
-		/* Extract ssid (if there is one) */
 		res.ssid_length = strlen(curr);
-		if (res.ssid_length) {
+		if ((res.ssid_length == 1) && (*curr == '\t')) {
+			/* Hidden SSID */
+			res.ssid_length = 0;
+		} else {
 			strcpy(res.ssid, curr);
 		}
 
@@ -336,17 +363,35 @@ MODEM_CMD_DIRECT_DEFINE(on_cmd_wfscan)
 		}
 
 		// TODO can we detect the end using the fact the whole buffer is null terminated?
-		if (++next == end) {
+		dev->last = ++next;
+		if (*next == 0x0d)
+		{
+			break;
+		} else if (next == end) {
 			return -EAGAIN;
 		}
-
-		dev->last = next;
 
 		/* Last response is followed by <CR><LF> */
 		// TODO - check for max ssid's, might be passed with original scan request...?
 	} while (*next != '\r');
 
-	return len;
+	uint16_t ret = len - sizeof("+WFSCAN:");
+	LOG_INF("remain: %d len: %d next: 0x%x ret: %d", end - next, len, *next, ret);
+
+#if 0
+	for (int i = 0; i < len; i+=8) {
+		LOG_INF("0x%02x %c 0x%02x %c 0x%02x %c 0x%02x %c 0x%02x %c 0x%02x %c 0x%02x %c 0x%02x %c",
+			dev->scan_rsp_buf[i],   dev->scan_rsp_buf[i],
+			dev->scan_rsp_buf[i+1], dev->scan_rsp_buf[i+1],
+			dev->scan_rsp_buf[i+2], dev->scan_rsp_buf[i+2],
+			dev->scan_rsp_buf[i+3], dev->scan_rsp_buf[i+3],
+			dev->scan_rsp_buf[i+4], dev->scan_rsp_buf[i+4],
+			dev->scan_rsp_buf[i+5], dev->scan_rsp_buf[i+5],
+			dev->scan_rsp_buf[i+6], dev->scan_rsp_buf[i+6],
+			dev->scan_rsp_buf[i+7], dev->scan_rsp_buf[i+7] );
+	}
+#endif
+	return len - sizeof("+WFSCAN:");
 }
 
 static const struct modem_cmd response_cmds[] = {
@@ -361,12 +406,20 @@ MODEM_CMD_DEFINE(on_cmd_wifi_connected)
 
 MODEM_CMD_DEFINE(on_cmd_wifi_disconnected)
 {
+	LOG_INF("on_cmd_wifi_disconnected");
+
+	struct ra_at_data *dev = CONTAINER_OF(data, struct ra_at_data,
+					    cmd_handler_data);
+
+	//if (esp_flags_are_set(dev, EDF_STA_CONNECTED)) {
+		k_work_submit_to_queue(&dev->workq, &dev->disconnect_work);
+
 	return 0;
 }
 
 static const struct modem_cmd unsol_cmds[] = {
 	MODEM_CMD("WIFI CONNECTED", on_cmd_wifi_connected, 0U, ""),
-	MODEM_CMD("WIFI DISCONNECT", on_cmd_wifi_disconnected, 0U, ""),
+	MODEM_CMD("+WFDAP", on_cmd_wifi_disconnected, 0U, ""),
 //	MODEM_CMD("VER", on_cmd_get_version, 0U, ""),
 //	MODEM_CMD("WIFI GOT IP", on_cmd_got_ip, 0U, ""),
 //	MODEM_CMD("0,CONNECT", on_cmd_connect, 0U, ""),
@@ -449,7 +502,7 @@ static void ra_at_mgmt_scan_work(struct k_work *work)
 			   RA_AT_CMD_WFSCAN,
 			   RA_AT_SCAN_TIMEOUT);
 
-   LOG_DBG("RA AT Wi-Fi scan: cmd = %s", RA_AT_CMD_WFSCAN);
+   //LOG_DBG("RA AT Wi-Fi scan: cmd = %s", RA_AT_CMD_WFSCAN);
 
 	if (ret < 0) {
 		LOG_ERR("Failed to scan: ret %d", ret);
@@ -462,18 +515,65 @@ static void ra_at_mgmt_scan_work(struct k_work *work)
 static int ra_at_mgmt_connect(const struct device *dev,
 			    struct wifi_connect_req_params *params)
 {
+	struct ra_at_data *data = dev->data;
+
+	// TODO - build command in dev->conn_cmd, work function will actually send it
+	char *tmp = "AT+WFJAP=TP-Link_1218,0";
+
+	strcpy(data->conn_cmd, tmp);
+
+	k_work_submit_to_queue(&data->workq, &data->connect_work);
+
 	return 0;
 }
 
-static int ra_at_mgmt_disconnect(const struct device *dev)
+static void ra_at_mgmt_connect_work(struct k_work *work)
 {
-	return 0;
+	struct ra_at_data *dev;
+	int ret;
+	static const struct modem_cmd cmds[] = {
+		MODEM_CMD_DIRECT("+WFJAP:", on_cmd_connect),
+	};
+
+	dev = CONTAINER_OF(work, struct ra_at_data, connect_work);
+
+	ret = ra_cmd_send(dev,
+		   cmds, ARRAY_SIZE(cmds),
+		   dev->conn_cmd,
+		   RA_AT_CONNECT_TIMEOUT);
+
+	LOG_INF("ret: %d", ret);
+
+	if (ret >= 0) {
+		wifi_mgmt_raise_connect_result_event(dev->net_iface, 0);
+		net_if_dormant_off(dev->net_iface);
+	}
+}
+
+static void ra_at_mgmt_disconnect_work(struct k_work *work)
+{
+	struct ra_at_data *dev;
+
+	dev = CONTAINER_OF(work, struct ra_at_data, disconnect_work);
+
+	wifi_mgmt_raise_disconnect_result_event(dev->net_iface, 0);
 }
 
 static int ra_at_mgmt_iface_status(const struct device *dev,
 				 struct wifi_iface_status *status)
 {
 	return 0;
+}
+
+static int ra_at_mgmt_disconnect(const struct device *dev)
+{
+	struct esp_data *data = dev->data;
+	int ret;
+
+	// TODO macro for timeout
+	ret = ra_cmd_send(data, NULL, 0, "AT+WFQAP",  K_SECONDS(10));
+
+	return ret;
 }
 
 static int ra_at_mgmt_reg_domain(const struct device *dev,
@@ -548,7 +648,7 @@ int ra_at_mgmt_get_version(const struct device *dev, struct wifi_version *params
 
 	k_work_submit_to_queue(&data->workq, &data->get_version_work);
 
-	// TODO - is this request as ra_cmd_send waits for response sem....?
+	// TODO - is this required as ra_cmd_send waits for response sem....?
 	k_sem_take(&data->get_version_sem, K_FOREVER);
 
 	params->drv_version = data->drv_version;
@@ -651,6 +751,8 @@ static int ra_at_init(const struct device *dev)
 
 	k_work_init(&data->init_work, ra_at_init_work);
 	k_work_init(&data->scan_work, ra_at_mgmt_scan_work);
+	k_work_init(&data->connect_work, ra_at_mgmt_connect_work);
+	k_work_init(&data->disconnect_work, ra_at_mgmt_disconnect_work);
 	k_work_init(&data->get_version_work, ra_at_mgmt_get_version_work);
 
 	k_work_queue_start(&data->workq, ra_at_workq_stack,
