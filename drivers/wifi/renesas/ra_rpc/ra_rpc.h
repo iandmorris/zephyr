@@ -26,7 +26,7 @@ struct ra_rpc_data {
 	struct k_work scan_work;
 	struct k_work connect_work;
 	struct k_work disconnect_work;
-	struct k_work iface_status_work;
+	//struct k_work iface_status_work;
 };
 
 int ra_rpc_socket_offload_init(struct net_if *iface);

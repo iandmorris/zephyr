@@ -246,34 +246,44 @@ static void ra_rpc_mgmt_disconnect_work(struct k_work *work)
 static int ra_rpc_mgmt_iface_status(const struct device *dev,
 	struct wifi_iface_status *status)
 {
-	int err;
+	WIFIReturnCode_t ret;
+	WIFIConnectionInfo_t conn_info;
 	struct ra_rpc_data *data = dev->data;
 
 	LOG_DBG("ra_rpc_mgmt_iface_status");
 	LOG_DBG("net_if_is_carrier_ok: %d", net_if_is_carrier_ok(data->net_iface));
 
-	memset(status, 0x0, sizeof(*status));
-
-	status->state = WIFI_STATE_UNKNOWN;
-	status->band = WIFI_FREQ_BAND_UNKNOWN;
-	status->iface_mode = WIFI_MODE_UNKNOWN;
-	status->link_mode = WIFI_LINK_MODE_UNKNOWN;
-	status->security = WIFI_SECURITY_TYPE_UNKNOWN;
-	status->mfp = WIFI_MFP_UNKNOWN;
+	memset(status, 0, sizeof(struct wifi_iface_status));
 
 	if (!net_if_is_carrier_ok(data->net_iface)) {
 		status->state = WIFI_STATE_INTERFACE_DISABLED;
 		return 0;
 	}
 
-	data->wifi_status = status;
-	err = k_work_submit_to_queue(&data->workq, &data->iface_status_work);
+	//ret = WIFI_IsConnected(NULL);
+	LOG_DBG("WIFI_IsConnected: %d", ret);
 
-	LOG_DBG("k_work_submit_to_queue - err: %d", err);
+	if (ret != eWiFiSuccess) {
+		status->state = WIFI_STATE_DISCONNECTED;
+		return 0;
+	}
+
+	ret = WIFI_GetConnectionInfo(&conn_info);
+	LOG_DBG("WIFI_IsConnected: %d", ret);
+
+	if (ret == eWiFiSuccess) {
+		status->state = WIFI_STATE_ASSOCIATED;
+		status->ssid_len = MIN(conn_info.ucSSIDLength, sizeof(status->ssid));
+		memcpy(status->ssid, conn_info.ucSSID, status->ssid_len);
+		status->channel = conn_info.ucChannel;
+		memcpy(status->bssid, conn_info.ucBSSID, sizeof(status->bssid));
+		// TODO status structure contains more elements
+	}
 
 	return 0;
 }
 
+#if 0
 static void ra_rpc_mgmt_iface_status_work(struct k_work *work)
 {
 	WIFIReturnCode_t ret;
@@ -297,6 +307,7 @@ static void ra_rpc_mgmt_iface_status_work(struct k_work *work)
 		}
 	}
 }
+#endif
 
 static int ra_rpc_mgmt_reg_domain(const struct device *dev,
 	struct wifi_reg_domain *reg_domain)
@@ -363,7 +374,7 @@ static int ra_rpc_init(const struct device *dev)
 	k_work_init(&data->scan_work, ra_rpc_mgmt_scan_work);
 	k_work_init(&data->connect_work, ra_rpc_mgmt_connect_work);
 	k_work_init(&data->disconnect_work, ra_rpc_mgmt_disconnect_work);
-	k_work_init(&data->iface_status_work, ra_rpc_mgmt_iface_status_work);
+	//k_work_init(&data->iface_status_work, ra_rpc_mgmt_iface_status_work);
 
 	/* Initialize the work queue */
 	k_work_queue_start(&data->workq, ra_rpc_workq_stack,
