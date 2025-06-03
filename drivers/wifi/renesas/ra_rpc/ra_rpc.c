@@ -260,7 +260,7 @@ static int ra_rpc_mgmt_iface_status(const struct device *dev,
 		return 0;
 	}
 
-	//ret = WIFI_IsConnected(NULL);
+	ret = WIFI_IsConnected(NULL);
 	LOG_DBG("WIFI_IsConnected: %d", ret);
 
 	if (ret != eWiFiSuccess) {
