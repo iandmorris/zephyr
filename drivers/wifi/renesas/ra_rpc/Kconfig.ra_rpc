@@ -7,6 +7,8 @@ menuconfig WIFI_RA_RPC
 	depends on DT_HAS_RENESAS_RA_RPC_ENABLED
 	select WIFI_OFFLOAD
 	select NET_L2_WIFI_MGMT
+	select NET_OFFLOAD
+	select NET_SOCKETS_OFFLOAD
 
 	# C++ Language Support (required by eRPC module)
 	select CPP

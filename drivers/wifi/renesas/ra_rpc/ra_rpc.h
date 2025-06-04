@@ -14,6 +14,14 @@
 extern "C" {
 #endif
 
+#define RA_RPC_MAX_SOCKETS 4
+
+struct ra_rpc_socket {
+	struct sockaddr src;
+	struct sockaddr dst;
+	int sd;
+};
+
 struct ra_rpc_data {
 	const struct device *bus;
 	struct net_if *net_iface;
@@ -21,6 +29,8 @@ struct ra_rpc_data {
 	uint16_t scan_max_bss_cnt;
 	struct WIFINetworkParams_t drv_nwk_params;
 	struct wifi_iface_status *wifi_status;
+
+	struct ra_rpc_socket sockets[RA_RPC_MAX_SOCKETS];
 
 	struct k_work_q workq;
 	struct k_work scan_work;
@@ -30,6 +40,7 @@ struct ra_rpc_data {
 };
 
 int ra_rpc_socket_offload_init(struct net_if *iface);
+int ra_rpc_socket_create(int family, int type, int proto);
 
 #ifdef __cplusplus
 }

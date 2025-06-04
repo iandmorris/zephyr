@@ -12,5 +12,6 @@ if(CONFIG_WIFI_RA_RPC)
   zephyr_include_directories(
 	.
 	service
+	${ZEPHYR_BASE}/subsys/net/lib/sockets
   )
 endif()
