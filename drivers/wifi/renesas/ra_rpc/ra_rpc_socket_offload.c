@@ -40,7 +40,10 @@ static int ra_rpc_socket_family_from_posix(int family, uint8_t *family_ra_rpc)
 		*family_ra_rpc = RA_RPC_AF_INET6;
 		break;
 	default:
-		return -EAFNOSUPPORT;
+		// TODO - family supplied by sendto function is not valid, figure out why?
+		*family_ra_rpc = RA_RPC_AF_INET;
+//		return -EAFNOSUPPORT;
+		break;
 	}
 
 	return 0;
