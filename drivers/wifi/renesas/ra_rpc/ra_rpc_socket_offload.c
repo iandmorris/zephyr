@@ -85,9 +85,16 @@ static ssize_t ra_rpc_socket_write(void *obj, const void *buf, size_t sz)
 
 static int ra_rpc_socket_close(void *obj)
 {
+	int ret;
+	struct ra_rpc_socket *sock = (struct ra_rpc_socket *)obj;
+
 	LOG_DBG("ra_rpc_socket_close");
 
-	return -1;
+	ret = ra6w1_close(sock->sd);
+
+	LOG_DBG("ra6w1_close: %d", ret);
+
+	return ret;
 }
 
 static int ra_rpc_socket_ioctl(void *obj, unsigned int request, va_list args)
