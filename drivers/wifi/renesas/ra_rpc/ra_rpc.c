@@ -323,7 +323,6 @@ static enum offloaded_net_if_types ra_rpc_offload_get_type(void)
 static void ra_rpc_iface_init(struct net_if *iface)
 {
 	ra_rpc_socket_offload_init(iface);
-	net_if_socket_offload_set(iface, ra_rpc_socket_create);
 
 	/* Not currently connected to a network */
 	net_if_dormant_on(iface);

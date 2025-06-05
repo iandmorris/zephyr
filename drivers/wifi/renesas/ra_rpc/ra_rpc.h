@@ -40,7 +40,6 @@ struct ra_rpc_data {
 };
 
 int ra_rpc_socket_offload_init(struct net_if *iface);
-int ra_rpc_socket_create(int family, int type, int proto);
 
 #ifdef __cplusplus
 }
