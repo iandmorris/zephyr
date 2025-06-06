@@ -100,22 +100,23 @@ static int ra_rpc_socket_close(void *obj)
 static int ra_rpc_socket_ioctl(void *obj, unsigned int request, va_list args)
 {
 	LOG_DBG("ra_rpc_socket_ioctl");
+	LOG_DBG("request: %d", request);
 
-	return -1;
+	return 0;
 }
 
 static int ra_rpc_socket_shutdown(void *obj, int how)
 {
 	LOG_DBG("ra_rpc_socket_shutdown");
 
-	return -1;
+	return 0;
 }
 
 static int ra_rpc_socket_bind(void *obj, const struct sockaddr *addr, socklen_t addrlen)
 {
 	LOG_DBG("ra_rpc_socket_bind");
 
-	return -1;
+	return 0;
 }
 
 static int ra_rpc_socket_connect(void *obj, const struct sockaddr *addr,
@@ -193,9 +194,33 @@ static ssize_t ra_rpc_socket_sendto(void *obj, const void *buf, size_t len, int 
 static ssize_t ra_rpc_socket_recvfrom(void *obj, void *buf, size_t max_len, int flags,
 			    struct sockaddr *src_addr, socklen_t *addrlen)
 {
-	LOG_DBG("ra_rpc_socket_recvfrom");
+	int ret;
+	struct ra_erpc_sockaddr addr_ra_rpc;
+	struct ra_rpc_socket *sock = (struct ra_rpc_socket *)obj;
+	uint32_t addr_len = 0;
 
-	return -1;
+	LOG_DBG("ra_rpc_socket_recvfrom");
+	LOG_DBG("max_len: %d", max_len);
+	LOG_DBG("addrlen: %d", *addrlen);
+	LOG_DBG("sd: %d", sock->sd);
+
+	ret = ra_rpc_socket_addr_from_posix(src_addr, &addr_ra_rpc);
+	if (ret) {
+		// TODO - better error code
+		return -1;
+	}
+
+	// TODO - fixme!! why is the value passed incorrect...
+	//*addrlen = sizeof(struct ra_erpc_sockaddr);
+	addr_len = sizeof(struct ra_erpc_sockaddr);
+
+	// TODO - fix this!
+	//ret = ra6w1_recvfrom(sock->sd, buf, max_len, flags, &addr_ra_rpc, &addr_len);
+	ret = ra6w1_recv(sock->sd, buf, max_len, flags);
+
+	LOG_DBG("ra6w1_recvfrom: %d", ret);
+
+	return ret;
 }
 
 static int ra_rpc_socket_getsockopt(void *obj, int level, int optname,
