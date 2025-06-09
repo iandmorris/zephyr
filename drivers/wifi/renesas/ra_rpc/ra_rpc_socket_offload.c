@@ -30,6 +30,23 @@ LOG_MODULE_REGISTER(wifi_ra_rpc_socket_offload, CONFIG_WIFI_LOG_LEVEL);
 
 static struct ra_rpc_socket ra_rpc_socket_1;
 
+static int ra_rpc_socket_family_to_posix(uint8_t family_ra_rpc, int *family)
+{
+	switch (family_ra_rpc) {
+	case RA_RPC_AF_INET:
+		*family = AF_INET;
+		break;
+	case RA_RPC_AF_INET6:
+		*family = AF_INET6;
+		break;
+	default:
+		return -EAFNOSUPPORT;
+		break;
+	}
+
+	return 0;
+}
+
 static int ra_rpc_socket_family_from_posix(int family, uint8_t *family_ra_rpc)
 {
 	switch (family) {
@@ -48,6 +65,7 @@ static int ra_rpc_socket_family_from_posix(int family, uint8_t *family_ra_rpc)
 
 	return 0;
 }
+
 static int ra_rpc_socket_addr_from_posix(const struct sockaddr *addr,
 				struct ra_erpc_sockaddr *addr_ra_rpc)
 {
@@ -65,6 +83,24 @@ static int ra_rpc_socket_addr_from_posix(const struct sockaddr *addr,
 
 	// TODO - must be a better way to get this...?
 	addr_ra_rpc->sa_len = sizeof(addr->data);
+
+	return err;
+}
+
+static int ra_rpc_socket_addr_to_posix(const struct sockaddr *addr,
+				struct ra_erpc_sockaddr *addr_ra_rpc)
+{
+	int err;
+
+	err = ra_rpc_socket_family_to_posix(addr_ra_rpc->sa_family, &addr->sa_family);
+	if (err) {
+		LOG_ERR("unsupported family: %d", addr_ra_rpc->sa_family);
+		// TODO - better error code
+		return -1;
+	}
+
+	// TODO - use MIN macro to find best length to copy...?
+	memcpy(addr->data, addr_ra_rpc->sa_data, sizeof(addr->data));
 
 	return err;
 }
@@ -114,9 +150,25 @@ static int ra_rpc_socket_shutdown(void *obj, int how)
 
 static int ra_rpc_socket_bind(void *obj, const struct sockaddr *addr, socklen_t addrlen)
 {
-	LOG_DBG("ra_rpc_socket_bind");
+	int ret;
+	struct ra_erpc_sockaddr addr_ra_rpc;
+	struct ra_rpc_socket *sock = (struct ra_rpc_socket *)obj;
 
-	return 0;
+	LOG_DBG("ra_rpc_socket_bind");
+	LOG_DBG("sd: %d", sock->sd);
+
+	ret = ra_rpc_socket_addr_from_posix(addr, &addr_ra_rpc);
+	if (ret) {
+		// TODO - better error code
+		return -1;
+	}
+
+	// TODO - pass addrlen instead?
+	ret = ra6w1_bind(sock->sd, &addr_ra_rpc, sizeof(struct ra_erpc_sockaddr));
+
+	LOG_DBG("ra6w1_bind: %d", ret);
+
+	return ret;
 }
 
 static int ra_rpc_socket_connect(void *obj, const struct sockaddr *addr,
@@ -157,16 +209,37 @@ static int ra_rpc_socket_connect(void *obj, const struct sockaddr *addr,
 
 static int ra_rpc_socket_listen(void *obj, int backlog)
 {
-	LOG_DBG("ra_rpc_socket_listen");
+	int ret;
+	struct ra_rpc_socket *sock = (struct ra_rpc_socket *)obj;
 
-	return -1;
+	LOG_DBG("ra_rpc_socket_listen");
+	LOG_DBG("sd: %d", sock->sd);
+	LOG_DBG("backlog: %d", backlog);
+
+	ret = ra6w1_listen(sock->sd, backlog);
+
+	LOG_DBG("ra6w1_listen: %d", ret);
+
+	return ret;
 }
 
 static int ra_rpc_socket_accept(void *obj, struct sockaddr *addr, socklen_t *addrlen)
 {
-	LOG_DBG("ra_rpc_socket_accept");
+	int ret;
+	struct ra_erpc_sockaddr addr_ra_rpc;
+	struct ra_rpc_socket *sock = (struct ra_rpc_socket *)obj;
 
-	return -1;
+	LOG_DBG("ra_rpc_socket_accept");
+	LOG_DBG("sd: %d", sock->sd);
+
+	ret = ra6w1_accept(sock->sd, &addr_ra_rpc, addrlen);
+	if (ret < 0) {
+		return ret;
+	}
+
+	ret = ra_rpc_socket_addr_to_posix(addr, &addr_ra_rpc);
+
+	return ret;
 }
 
 static ssize_t ra_rpc_socket_sendto(void *obj, const void *buf, size_t len, int flags,
@@ -187,6 +260,8 @@ static ssize_t ra_rpc_socket_sendto(void *obj, const void *buf, size_t len, int 
 	}
 
 	ret = ra6w1_sendto(sock->sd, buf, len, flags, &addr_ra_rpc, addrlen);
+
+	LOG_DBG("ra6w1_sendto: %d", ret);
 
 	return ret;
 }

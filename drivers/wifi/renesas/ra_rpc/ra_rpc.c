@@ -135,9 +135,12 @@ static void ra_rpc_mgmt_scan_work(struct k_work *work)
 				entry.mac_length = WIFI_MAC_ADDR_LEN;
 				memcpy(entry.mac, results[i].ucBSSID, entry.mac_length);
 
-				// TODO - replace magic value...
-				if (entry.channel > 14) {
+				if (wifi_utils_validate_chan_2g(entry.channel)) {
+					entry.band = WIFI_FREQ_BAND_2_4_GHZ;
+				} else if (wifi_utils_validate_chan_5g(entry.channel)) {
 					entry.band = WIFI_FREQ_BAND_5_GHZ;
+				} else {
+					entry.band = WIFI_FREQ_BAND_UNKNOWN;
 				}
 
 				dev->scan_cb(dev->net_iface, 0, &entry);
@@ -187,6 +190,10 @@ static void ra_rpc_mgmt_connect_work(struct k_work *work)
 {
 	struct ra_rpc_data *dev;
 	WIFIReturnCode_t ret;
+	WIFIIPConfiguration_t ip_config;
+	struct in_addr ip_addr;
+	struct in_addr gw_addr;
+	struct in_addr netmask;
 	int status = 0;
 
 	dev = CONTAINER_OF(work, struct ra_rpc_data, connect_work);
@@ -205,7 +212,25 @@ static void ra_rpc_mgmt_connect_work(struct k_work *work)
 	if (ret) {
 		status = -1;
 	}
+
+	// TODO - this is not working at present, just returns 0.0.0.0 for all IP addresses...
+	ret = WIFI_GetIPInfo(&ip_config);
+
+	LOG_DBG("WIFI_GetIPInfo: %d", ret);
+
+	if (ret == eWiFiSuccess) {
+		memcpy(ip_addr.s_addr, &ip_config.xIPAddress.ulAddress, sizeof(ip_addr.s_addr));
+		memcpy(gw_addr.s_addr, &ip_config.xGateway.ulAddress, sizeof(gw_addr.s_addr));
+		memcpy(netmask.s_addr, &ip_config.xNetMask.ulAddress, sizeof(netmask.s_addr));
+
+		net_if_ipv4_addr_add(dev->net_iface, &ip_addr, NET_ADDR_DHCP, 0);
+		net_if_ipv4_set_gw(dev->net_iface, &gw_addr);
+		net_if_ipv4_set_netmask_by_addr(dev->net_iface, &ip_addr, &netmask);
+	}
+
 	wifi_mgmt_raise_connect_result_event(dev->net_iface, status);
+	// TODO - don't do this if not connected
+	net_if_dormant_off(dev->net_iface);
 }
 
 static int ra_rpc_mgmt_disconnect(const struct device *dev)
@@ -241,6 +266,7 @@ static void ra_rpc_mgmt_disconnect_work(struct k_work *work)
 	}
 
 	wifi_mgmt_raise_disconnect_result_event(dev->net_iface, status);
+	net_if_dormant_on(dev->net_iface);
 }
 
 static int ra_rpc_mgmt_iface_status(const struct device *dev,
