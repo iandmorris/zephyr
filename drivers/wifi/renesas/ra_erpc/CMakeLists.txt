@@ -1,10 +1,10 @@
 # Copyright (c) 2025 Renesas Electronics Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-if(CONFIG_WIFI_RA_RPC)
+if(CONFIG_WIFI_RA_ERPC)
   zephyr_library_sources(
-    ra_rpc.c
-	ra_rpc_socket_offload.c
+    ra_erpc.c
+	ra_erpc_socket_offload.c
 	service/c_wifi_client.cpp
 	service/wifi_client.cpp
 	service/wifi_interface.cpp

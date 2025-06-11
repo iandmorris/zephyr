@@ -4,26 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT renesas_ra_rpc
+#define DT_DRV_COMPAT renesas_ra_erpc
 
 #include <stdlib.h>
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(wifi_ra_rpc, CONFIG_WIFI_LOG_LEVEL);
+LOG_MODULE_REGISTER(wifi_ra_erpc, CONFIG_WIFI_LOG_LEVEL);
 
 #include <zephyr/net/wifi_mgmt.h>
+#include <zephyr/net/wifi_utils.h>
 #include <zephyr/net/conn_mgr/connectivity_wifi_mgmt.h>
 #include <erpc_client_setup.h>
 #include <erpc_transport_setup.h>
 #include <erpc_mbf_setup.h>
 
-#include "ra_rpc.h"
+#include "ra_erpc.h"
 #include "c_wifi_client.h"
 
-K_KERNEL_STACK_DEFINE(ra_rpc_workq_stack,
-		      CONFIG_WIFI_RA_RPC_WORKQ_STACK_SIZE);
+K_KERNEL_STACK_DEFINE(ra_erpc_workq_stack,
+		      CONFIG_WIFI_RA_ERPC_WORKQ_STACK_SIZE);
 
-struct ra_rpc_data ra_rpc_driver_data;
+struct ra_erpc_data ra_erpc_driver_data;
 
 static inline enum wifi_security_type drv_to_wifi_mgmt_sec(int drv_security_type)
 {
@@ -65,14 +66,14 @@ static inline enum WIFISecurity_t wifi_mgmt_to_drv_sec(int wifi_mgmt_security_ty
 	}
 }
 
-static int ra_rpc_mgmt_scan(const struct device *dev,
+static int ra_erpc_mgmt_scan(const struct device *dev,
 	struct wifi_scan_params *params,
 	scan_result_cb_t cb)
 {
 	int err;
-	struct ra_rpc_data *data = dev->data;
+	struct ra_erpc_data *data = dev->data;
 
-	LOG_DBG("ra_rpc_mgmt_scan");
+	LOG_DBG("ra_erpc_mgmt_scan");
 	LOG_DBG("type: %d cb: 0x%x", params->scan_type, (int)data->scan_cb);
 
 	if (data->scan_cb != NULL) {
@@ -93,20 +94,20 @@ static int ra_rpc_mgmt_scan(const struct device *dev,
 	return 0;
 }
 
-static void ra_rpc_mgmt_scan_work(struct k_work *work)
+static void ra_erpc_mgmt_scan_work(struct k_work *work)
 {
-	struct ra_rpc_data *dev;
+	struct ra_erpc_data *dev;
 	struct wifi_scan_result entry;
 	WIFIScanResult_t *results;
 	WIFIReturnCode_t ret;
 	int i;
 
-	LOG_DBG("ra_rpc_mgmt_scan_work");
+	LOG_DBG("ra_erpc_mgmt_scan_work");
 
-	dev = CONTAINER_OF(work, struct ra_rpc_data, scan_work);
+	dev = CONTAINER_OF(work, struct ra_erpc_data, scan_work);
 
 	if (dev->scan_max_bss_cnt == 0) {
-		dev->scan_max_bss_cnt = CONFIG_WIFI_RA_RPC_MAX_BBS_COUNT;
+		dev->scan_max_bss_cnt = CONFIG_WIFI_RA_ERPC_MAX_BBS_COUNT;
 	}
 
 	results = malloc(dev->scan_max_bss_cnt * sizeof(WIFIScanResult_t));
@@ -157,13 +158,13 @@ static void ra_rpc_mgmt_scan_work(struct k_work *work)
 	dev->scan_cb = NULL;
 }
 
-static int ra_rpc_mgmt_connect(const struct device *dev,
+static int ra_erpc_mgmt_connect(const struct device *dev,
 	struct wifi_connect_req_params *params)
 {
 	int err;
-	struct ra_rpc_data *data = dev->data;
+	struct ra_erpc_data *data = dev->data;
 
-	LOG_DBG("ra_rpc_mgmt_connect");
+	LOG_DBG("ra_erpc_mgmt_connect");
 
 	memset(&data->drv_nwk_params, 0, sizeof(sizeof(WIFINetworkParams_t)));
 
@@ -186,19 +187,19 @@ static int ra_rpc_mgmt_connect(const struct device *dev,
 	return 0;
 }
 
-static void ra_rpc_mgmt_connect_work(struct k_work *work)
+static void ra_erpc_mgmt_connect_work(struct k_work *work)
 {
-	struct ra_rpc_data *dev;
+	struct ra_erpc_data *dev;
 	WIFIReturnCode_t ret;
-	WIFIIPConfiguration_t ip_config;
-	struct in_addr ip_addr;
-	struct in_addr gw_addr;
-	struct in_addr netmask;
+	//WIFIIPConfiguration_t ip_config;
+	//struct in_addr ip_addr;
+	//struct in_addr gw_addr;
+	//struct in_addr netmask;
 	int status = 0;
 
-	dev = CONTAINER_OF(work, struct ra_rpc_data, connect_work);
+	dev = CONTAINER_OF(work, struct ra_erpc_data, connect_work);
 
-	LOG_DBG("ra_rpc_mgmt_connect_work");
+	LOG_DBG("ra_erpc_mgmt_connect_work");
 	LOG_DBG("ucSSID: %s", dev->drv_nwk_params.ucSSID);
 	LOG_DBG("ucSSIDLength: %d", dev->drv_nwk_params.ucSSIDLength);
 	LOG_DBG("xSecurity: %d", dev->drv_nwk_params.xSecurity);
@@ -214,31 +215,31 @@ static void ra_rpc_mgmt_connect_work(struct k_work *work)
 	}
 
 	// TODO - this is not working at present, just returns 0.0.0.0 for all IP addresses...
-	ret = WIFI_GetIPInfo(&ip_config);
+	//ret = WIFI_GetIPInfo(&ip_config);
 
-	LOG_DBG("WIFI_GetIPInfo: %d", ret);
+	//LOG_DBG("WIFI_GetIPInfo: %d", ret);
 
-	if (ret == eWiFiSuccess) {
-		memcpy(ip_addr.s_addr, &ip_config.xIPAddress.ulAddress, sizeof(ip_addr.s_addr));
-		memcpy(gw_addr.s_addr, &ip_config.xGateway.ulAddress, sizeof(gw_addr.s_addr));
-		memcpy(netmask.s_addr, &ip_config.xNetMask.ulAddress, sizeof(netmask.s_addr));
+	//if (ret == eWiFiSuccess) {
+	//	memcpy(ip_addr.s_addr, &ip_config.xIPAddress.ulAddress, sizeof(ip_addr.s_addr));
+	//	memcpy(gw_addr.s_addr, &ip_config.xGateway.ulAddress, sizeof(gw_addr.s_addr));
+	//	memcpy(netmask.s_addr, &ip_config.xNetMask.ulAddress, sizeof(netmask.s_addr));
 
-		net_if_ipv4_addr_add(dev->net_iface, &ip_addr, NET_ADDR_DHCP, 0);
-		net_if_ipv4_set_gw(dev->net_iface, &gw_addr);
-		net_if_ipv4_set_netmask_by_addr(dev->net_iface, &ip_addr, &netmask);
-	}
+	//	net_if_ipv4_addr_add(dev->net_iface, &ip_addr, NET_ADDR_DHCP, 0);
+	//	net_if_ipv4_set_gw(dev->net_iface, &gw_addr);
+	//	net_if_ipv4_set_netmask_by_addr(dev->net_iface, &ip_addr, &netmask);
+	//}
 
 	wifi_mgmt_raise_connect_result_event(dev->net_iface, status);
 	// TODO - don't do this if not connected
 	net_if_dormant_off(dev->net_iface);
 }
 
-static int ra_rpc_mgmt_disconnect(const struct device *dev)
+static int ra_erpc_mgmt_disconnect(const struct device *dev)
 {
 	int err;
-	struct ra_rpc_data *data = dev->data;
+	struct ra_erpc_data *data = dev->data;
 
-	LOG_DBG("ra_rpc_mgmt_disconnect");
+	LOG_DBG("ra_erpc_mgmt_disconnect");
 
 	err = k_work_submit_to_queue(&data->workq, &data->disconnect_work);
 
@@ -247,15 +248,15 @@ static int ra_rpc_mgmt_disconnect(const struct device *dev)
 	return 0;
 }
 
-static void ra_rpc_mgmt_disconnect_work(struct k_work *work)
+static void ra_erpc_mgmt_disconnect_work(struct k_work *work)
 {
 	int status = 0;
-	struct ra_rpc_data *dev;
+	struct ra_erpc_data *dev;
 	WIFIReturnCode_t ret;
 
-	LOG_DBG("ra_rpc_mgmt_disconnect_work");
+	LOG_DBG("ra_erpc_mgmt_disconnect_work");
 
-	dev = CONTAINER_OF(work, struct ra_rpc_data, disconnect_work);
+	dev = CONTAINER_OF(work, struct ra_erpc_data, disconnect_work);
 
 	ret = WIFI_Disconnect();
 
@@ -269,14 +270,14 @@ static void ra_rpc_mgmt_disconnect_work(struct k_work *work)
 	net_if_dormant_on(dev->net_iface);
 }
 
-static int ra_rpc_mgmt_iface_status(const struct device *dev,
+static int ra_erpc_mgmt_iface_status(const struct device *dev,
 	struct wifi_iface_status *status)
 {
 	WIFIReturnCode_t ret;
 	WIFIConnectionInfo_t conn_info;
-	struct ra_rpc_data *data = dev->data;
+	struct ra_erpc_data *data = dev->data;
 
-	LOG_DBG("ra_rpc_mgmt_iface_status");
+	LOG_DBG("ra_erpc_mgmt_iface_status");
 	LOG_DBG("net_if_is_carrier_ok: %d", net_if_is_carrier_ok(data->net_iface));
 
 	memset(status, 0, sizeof(struct wifi_iface_status));
@@ -310,15 +311,15 @@ static int ra_rpc_mgmt_iface_status(const struct device *dev,
 }
 
 #if 0
-static void ra_rpc_mgmt_iface_status_work(struct k_work *work)
+static void ra_erpc_mgmt_iface_status_work(struct k_work *work)
 {
 	WIFIReturnCode_t ret;
 	WIFIConnectionInfo_t conn_info;
-	struct ra_rpc_data *dev;
+	struct ra_erpc_data *dev;
 
-	LOG_DBG("ra_rpc_mgmt_iface_status_work");
+	LOG_DBG("ra_erpc_mgmt_iface_status_work");
 
-	dev = CONTAINER_OF(work, struct ra_rpc_data, iface_status_work);
+	dev = CONTAINER_OF(work, struct ra_erpc_data, iface_status_work);
 
 	ret = WIFI_GetConnectionInfo(&conn_info);
 
@@ -335,32 +336,32 @@ static void ra_rpc_mgmt_iface_status_work(struct k_work *work)
 }
 #endif
 
-static int ra_rpc_mgmt_reg_domain(const struct device *dev,
+static int ra_erpc_mgmt_reg_domain(const struct device *dev,
 	struct wifi_reg_domain *reg_domain)
 {
 	return 0;
 }
 
-static enum offloaded_net_if_types ra_rpc_offload_get_type(void)
+static enum offloaded_net_if_types ra_erpc_offload_get_type(void)
 {
 	return L2_OFFLOADED_NET_IF_TYPE_WIFI;
 }
 
-static void ra_rpc_iface_init(struct net_if *iface)
+static void ra_erpc_iface_init(struct net_if *iface)
 {
-	ra_rpc_socket_offload_init(iface);
+	ra_erpc_socket_offload_init(iface);
 
 	/* Not currently connected to a network */
 	net_if_dormant_on(iface);
 }
 
-static const struct wifi_mgmt_ops ra_rpc_mgmt_ops = {
-	.scan		   		= ra_rpc_mgmt_scan,
-	.connect	   		= ra_rpc_mgmt_connect,
-	.disconnect	   		= ra_rpc_mgmt_disconnect,
-	.iface_status  		= ra_rpc_mgmt_iface_status,
-	.reg_domain         = ra_rpc_mgmt_reg_domain,
-#ifdef CONFIG_WIFI_RA_RPC_SOFTAP_SUPPORT
+static const struct wifi_mgmt_ops ra_erpc_mgmt_ops = {
+	.scan		   		= ra_erpc_mgmt_scan,
+	.connect	   		= ra_erpc_mgmt_connect,
+	.disconnect	   		= ra_erpc_mgmt_disconnect,
+	.iface_status  		= ra_erpc_mgmt_iface_status,
+	.reg_domain         = ra_erpc_mgmt_reg_domain,
+#ifdef CONFIG_WIFI_RA_ERPC_SOFTAP_SUPPORT
 	.ap_enable     		= NULL,
 	.ap_disable    		= NULL,
 	.ap_sta_disconnect 	= NULL,
@@ -368,27 +369,27 @@ static const struct wifi_mgmt_ops ra_rpc_mgmt_ops = {
 #endif
 };
 
-static const struct net_wifi_mgmt_offload ra_rpc_api = {
-	.wifi_iface.iface_api.init = ra_rpc_iface_init,
-	.wifi_iface.get_type = ra_rpc_offload_get_type,
-	.wifi_mgmt_api = &ra_rpc_mgmt_ops,
+static const struct net_wifi_mgmt_offload ra_erpc_api = {
+	.wifi_iface.iface_api.init = ra_erpc_iface_init,
+	.wifi_iface.get_type = ra_erpc_offload_get_type,
+	.wifi_mgmt_api = &ra_erpc_mgmt_ops,
 };
 
-static int ra_rpc_init(const struct device *dev);
+static int ra_erpc_init(const struct device *dev);
 
-NET_DEVICE_DT_INST_OFFLOAD_DEFINE(0, ra_rpc_init, NULL,
-	&ra_rpc_driver_data, NULL,
-	CONFIG_WIFI_INIT_PRIORITY, &ra_rpc_api,
+NET_DEVICE_DT_INST_OFFLOAD_DEFINE(0, ra_erpc_init, NULL,
+	&ra_erpc_driver_data, NULL,
+	CONFIG_WIFI_INIT_PRIORITY, &ra_erpc_api,
 	1500); // TODO - create a macro or config option for this?
 
 CONNECTIVITY_WIFI_MGMT_BIND(Z_DEVICE_DT_DEV_ID(DT_DRV_INST(0)));
 
-static int ra_rpc_init(const struct device *dev)
+static int ra_erpc_init(const struct device *dev)
 {
     erpc_transport_t transport;
     erpc_mbf_t message_buffer_factory;
     erpc_client_t client_manager;
-	struct ra_rpc_data *data = dev->data;
+	struct ra_erpc_data *data = dev->data;
 
 	data->bus = DEVICE_DT_GET(DT_INST_BUS(0));
 
@@ -397,17 +398,17 @@ static int ra_rpc_init(const struct device *dev)
 		return -ENODEV;
 	}
 
-	k_work_init(&data->scan_work, ra_rpc_mgmt_scan_work);
-	k_work_init(&data->connect_work, ra_rpc_mgmt_connect_work);
-	k_work_init(&data->disconnect_work, ra_rpc_mgmt_disconnect_work);
-	//k_work_init(&data->iface_status_work, ra_rpc_mgmt_iface_status_work);
+	k_work_init(&data->scan_work, ra_erpc_mgmt_scan_work);
+	k_work_init(&data->connect_work, ra_erpc_mgmt_connect_work);
+	k_work_init(&data->disconnect_work, ra_erpc_mgmt_disconnect_work);
+	//k_work_init(&data->iface_status_work, ra_erpc_mgmt_iface_status_work);
 
 	/* Initialize the work queue */
-	k_work_queue_start(&data->workq, ra_rpc_workq_stack,
-			   K_KERNEL_STACK_SIZEOF(ra_rpc_workq_stack),
-			   K_PRIO_COOP(CONFIG_WIFI_RA_RPC_WORKQ_THREAD_PRIORITY),
+	k_work_queue_start(&data->workq, ra_erpc_workq_stack,
+			   K_KERNEL_STACK_SIZEOF(ra_erpc_workq_stack),
+			   K_PRIO_COOP(CONFIG_WIFI_RA_ERPC_WORKQ_THREAD_PRIORITY),
 			   NULL);
-	k_thread_name_set(&data->workq.thread, "ra_rpc_workq");
+	k_thread_name_set(&data->workq.thread, "ra_erpc_workq");
 
     /* Initialize the eRPC client infrastructure */
     transport = erpc_transport_zephyr_uart_init(data->bus);
