@@ -31,12 +31,11 @@ LOG_MODULE_REGISTER(wifi_ra_erpc_socket_offload, CONFIG_WIFI_LOG_LEVEL);
 #define RA_ERPC_MAX_SOCKETS 4
 
 struct ra_erpc_socket {
-	struct sockaddr src;
-	struct sockaddr dst;
-	int sd;
+	int fd;
+	bool in_use;
 };
 
-static struct ra_erpc_socket ra_erpc_socket_1;
+static struct ra_erpc_socket sockets[RA_ERPC_MAX_SOCKETS];
 
 static int ra_erpc_socket_family_to_posix(uint8_t family_ra_erpc, int *family)
 {
@@ -134,7 +133,14 @@ static int ra_erpc_socket_close(void *obj)
 
 	LOG_DBG("ra_erpc_socket_close");
 
-	ret = ra6w1_close(sock->sd);
+	for (int i = 0; i < RA_ERPC_MAX_SOCKETS; i++) {
+		if (sockets[i].fd == sock->fd) {
+			sockets[i].in_use = false;
+			break;
+		}
+	}
+
+	ret = ra6w1_close(sock->fd);
 
 	LOG_DBG("ra6w1_close: %d", ret);
 
@@ -163,7 +169,7 @@ static int ra_erpc_socket_bind(void *obj, const struct sockaddr *addr, socklen_t
 	struct ra_erpc_socket *sock = (struct ra_erpc_socket *)obj;
 
 	LOG_DBG("ra_erpc_socket_bind");
-	LOG_DBG("sd: %d", sock->sd);
+	LOG_DBG("fd: %d", sock->fd);
 
 	ret = ra_erpc_socket_addr_from_posix(addr, &addr_ra_erpc);
 	if (ret) {
@@ -172,7 +178,7 @@ static int ra_erpc_socket_bind(void *obj, const struct sockaddr *addr, socklen_t
 	}
 
 	// TODO - pass addrlen instead?
-	ret = ra6w1_bind(sock->sd, &addr_ra_erpc, sizeof(struct ra_erpc_sockaddr));
+	ret = ra6w1_bind(sock->fd, &addr_ra_erpc, sizeof(struct ra_erpc_sockaddr));
 
 	LOG_DBG("ra6w1_bind: %d", ret);
 
@@ -189,7 +195,7 @@ static int ra_erpc_socket_connect(void *obj, const struct sockaddr *addr,
 	LOG_DBG("ra_erpc_socket_connect");
 	LOG_DBG("addr->sa_family: %d", addr->sa_family);
 	LOG_DBG("addrlen: %d", addrlen);
-	LOG_DBG("sd: %d", sock->sd);
+	LOG_DBG("fd: %d", sock->fd);
 
 	if (addr->sa_family == AF_INET) {
 		char addr_str[NET_IPV4_ADDR_LEN];
@@ -208,7 +214,7 @@ static int ra_erpc_socket_connect(void *obj, const struct sockaddr *addr,
 		return -1;
 	}
 
-	ret = ra6w1_connect(sock->sd, &addr_ra_erpc, sizeof(struct ra_erpc_sockaddr));
+	ret = ra6w1_connect(sock->fd, &addr_ra_erpc, sizeof(struct ra_erpc_sockaddr));
 
 	LOG_DBG("ra6w1_connect: %d", ret);
 
@@ -221,10 +227,10 @@ static int ra_erpc_socket_listen(void *obj, int backlog)
 	struct ra_erpc_socket *sock = (struct ra_erpc_socket *)obj;
 
 	LOG_DBG("ra_erpc_socket_listen");
-	LOG_DBG("sd: %d", sock->sd);
+	LOG_DBG("fd: %d", sock->fd);
 	LOG_DBG("backlog: %d", backlog);
 
-	ret = ra6w1_listen(sock->sd, backlog);
+	ret = ra6w1_listen(sock->fd, backlog);
 
 	LOG_DBG("ra6w1_listen: %d", ret);
 
@@ -238,9 +244,9 @@ static int ra_erpc_socket_accept(void *obj, struct sockaddr *addr, socklen_t *ad
 	struct ra_erpc_socket *sock = (struct ra_erpc_socket *)obj;
 
 	LOG_DBG("ra_erpc_socket_accept");
-	LOG_DBG("sd: %d", sock->sd);
+	LOG_DBG("fd: %d", sock->fd);
 
-	ret = ra6w1_accept(sock->sd, &addr_ra_erpc, addrlen);
+	ret = ra6w1_accept(sock->fd, &addr_ra_erpc, addrlen);
 	if (ret < 0) {
 		return ret;
 	}
@@ -259,7 +265,7 @@ static ssize_t ra_erpc_socket_sendto(void *obj, const void *buf, size_t len, int
 
 	LOG_DBG("ra_erpc_socket_sendto");
 	LOG_DBG("len: %d", len);
-	LOG_DBG("sd: %d", sock->sd);
+	LOG_DBG("fd: %d", sock->fd);
 
 	ret = ra_erpc_socket_addr_from_posix(dest_addr, &addr_ra_erpc);
 	if (ret) {
@@ -267,7 +273,7 @@ static ssize_t ra_erpc_socket_sendto(void *obj, const void *buf, size_t len, int
 		return -1;
 	}
 
-	ret = ra6w1_sendto(sock->sd, buf, len, flags, &addr_ra_erpc, addrlen);
+	ret = ra6w1_sendto(sock->fd, buf, len, flags, &addr_ra_erpc, addrlen);
 
 	LOG_DBG("ra6w1_sendto: %d", ret);
 
@@ -283,15 +289,15 @@ static ssize_t ra_erpc_socket_recvfrom(void *obj, void *buf, size_t max_len, int
 	uint32_t addr_len = 0;
 
 	LOG_DBG("ra_erpc_socket_recvfrom");
-	LOG_DBG("sd: %d", sock->sd);
+	LOG_DBG("fd: %d", sock->fd);
 	LOG_DBG("max_len: %d", max_len);
 
 	// TODO - fixme!!
 	//*addrlen = sizeof(struct ra_erpc_sockaddr);
 	addr_len = sizeof(struct ra_erpc_sockaddr);
 
-	//ret = ra6w1_recvfrom(sock->sd, buf, max_len, flags, &addr_ra_erpc, &addr_len);
-	ret = ra6w1_recv(sock->sd, buf, max_len, flags);
+	//ret = ra6w1_recvfrom(sock->fd, buf, max_len, flags, &addr_ra_erpc, &addr_len);
+	ret = ra6w1_recv(sock->fd, buf, max_len, flags);
 
 	//LOG_DBG("ra6w1_recvfrom: %d", ret);
 	LOG_DBG("ra6w1_recv: %d", ret);
@@ -381,6 +387,7 @@ static int ra_erpc_socket_create(int family, int type, int proto)
 	int sock;
 	uint8_t family_ra_erpc;
 	int fd = zvfs_reserve_fd();
+	struct ra_erpc_socket *socket = NULL;
 
 	LOG_DBG("ra_erpc_socket_create");
 	LOG_DBG("family: %d", family);
@@ -404,9 +411,21 @@ static int ra_erpc_socket_create(int family, int type, int proto)
 		return -1;
 	}
 
-	ra_erpc_socket_1.sd = sock;
+	for (int i = 0; i < RA_ERPC_MAX_SOCKETS; i++) {
+		if (sockets[i].in_use == false) {
+			sockets[i].fd = sock;
+			sockets[i].in_use = true;
+			socket = &sockets[i];
+			break;
+		}
+	}
 
-	zvfs_finalize_typed_fd(fd, &ra_erpc_socket_1,
+	if (socket == NULL){
+		zvfs_free_fd(fd);
+		return -1;
+	}
+
+	zvfs_finalize_typed_fd(fd, socket,
 			    (const struct fd_op_vtable *)&ra_erpc_socket_fd_op_vtable,
 			    ZVFS_MODE_IFSOCK);
 
@@ -435,6 +454,8 @@ static bool ra_erpc_socket_is_supported(int family, int type, int proto)
 
 int ra_erpc_socket_offload_init(struct net_if *iface)
 {
+	memset(sockets, 0, sizeof(sockets));
+
 	net_if_socket_offload_set(iface, ra_erpc_socket_create);
 
 	return 0;

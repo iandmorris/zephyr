@@ -9,7 +9,7 @@
 	current-speed = <115200>;
 
 	ra6w1 {
-		compatible = "renesas,ra-rpc";
+		compatible = "renesas,ra-erpc";
 		status = "okay";
 	};
 };
