@@ -28,6 +28,14 @@ LOG_MODULE_REGISTER(wifi_ra_erpc_socket_offload, CONFIG_WIFI_LOG_LEVEL);
 #define RA_ERPC_AF_INET		2
 #define RA_ERPC_AF_INET6		10
 
+#define RA_ERPC_MAX_SOCKETS 4
+
+struct ra_erpc_socket {
+	struct sockaddr src;
+	struct sockaddr dst;
+	int sd;
+};
+
 static struct ra_erpc_socket ra_erpc_socket_1;
 
 static int ra_erpc_socket_family_to_posix(uint8_t family_ra_erpc, int *family)
@@ -138,14 +146,14 @@ static int ra_erpc_socket_ioctl(void *obj, unsigned int request, va_list args)
 	LOG_DBG("ra_erpc_socket_ioctl");
 	LOG_DBG("request: %d", request);
 
-	return 0;
+	return -1;
 }
 
 static int ra_erpc_socket_shutdown(void *obj, int how)
 {
 	LOG_DBG("ra_erpc_socket_shutdown");
 
-	return 0;
+	return -1;
 }
 
 static int ra_erpc_socket_bind(void *obj, const struct sockaddr *addr, socklen_t addrlen)

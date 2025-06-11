@@ -19,6 +19,7 @@ LOG_MODULE_REGISTER(wifi_ra_erpc, CONFIG_WIFI_LOG_LEVEL);
 #include <erpc_mbf_setup.h>
 
 #include "ra_erpc.h"
+#include "ra_erpc_socket_offload.h"
 #include "c_wifi_client.h"
 
 K_KERNEL_STACK_DEFINE(ra_erpc_workq_stack,
@@ -270,78 +271,6 @@ static void ra_erpc_mgmt_disconnect_work(struct k_work *work)
 	net_if_dormant_on(dev->net_iface);
 }
 
-static int ra_erpc_mgmt_iface_status(const struct device *dev,
-	struct wifi_iface_status *status)
-{
-	WIFIReturnCode_t ret;
-	WIFIConnectionInfo_t conn_info;
-	struct ra_erpc_data *data = dev->data;
-
-	LOG_DBG("ra_erpc_mgmt_iface_status");
-	LOG_DBG("net_if_is_carrier_ok: %d", net_if_is_carrier_ok(data->net_iface));
-
-	memset(status, 0, sizeof(struct wifi_iface_status));
-
-	if (!net_if_is_carrier_ok(data->net_iface)) {
-		status->state = WIFI_STATE_INTERFACE_DISABLED;
-		return 0;
-	}
-
-	ret = WIFI_IsConnected(NULL);
-	LOG_DBG("WIFI_IsConnected: %d", ret);
-
-	if (ret != eWiFiSuccess) {
-		status->state = WIFI_STATE_DISCONNECTED;
-		return 0;
-	}
-
-	ret = WIFI_GetConnectionInfo(&conn_info);
-	LOG_DBG("WIFI_IsConnected: %d", ret);
-
-	if (ret == eWiFiSuccess) {
-		status->state = WIFI_STATE_ASSOCIATED;
-		status->ssid_len = MIN(conn_info.ucSSIDLength, sizeof(status->ssid));
-		memcpy(status->ssid, conn_info.ucSSID, status->ssid_len);
-		status->channel = conn_info.ucChannel;
-		memcpy(status->bssid, conn_info.ucBSSID, sizeof(status->bssid));
-		// TODO status structure contains more elements
-	}
-
-	return 0;
-}
-
-#if 0
-static void ra_erpc_mgmt_iface_status_work(struct k_work *work)
-{
-	WIFIReturnCode_t ret;
-	WIFIConnectionInfo_t conn_info;
-	struct ra_erpc_data *dev;
-
-	LOG_DBG("ra_erpc_mgmt_iface_status_work");
-
-	dev = CONTAINER_OF(work, struct ra_erpc_data, iface_status_work);
-
-	ret = WIFI_GetConnectionInfo(&conn_info);
-
-	LOG_DBG("WIFI_GetConnectionInfo: %d", ret);
-
-	if (ret == eWiFiSuccess) {
-		dev->wifi_status->channel = conn_info.ucChannel;
-		memcpy(dev->wifi_status->bssid, conn_info.ucBSSID, WIFI_MAC_ADDR_LEN);
-		if (conn_info.ucSSIDLength < WIFI_SSID_MAX_LEN) {
-			dev->wifi_status->ssid_len = conn_info.ucSSIDLength;
-			memcpy(dev->wifi_status->ssid, conn_info.ucSSID, dev->wifi_status->ssid_len);
-		}
-	}
-}
-#endif
-
-static int ra_erpc_mgmt_reg_domain(const struct device *dev,
-	struct wifi_reg_domain *reg_domain)
-{
-	return 0;
-}
-
 static enum offloaded_net_if_types ra_erpc_offload_get_type(void)
 {
 	return L2_OFFLOADED_NET_IF_TYPE_WIFI;
@@ -359,8 +288,6 @@ static const struct wifi_mgmt_ops ra_erpc_mgmt_ops = {
 	.scan		   		= ra_erpc_mgmt_scan,
 	.connect	   		= ra_erpc_mgmt_connect,
 	.disconnect	   		= ra_erpc_mgmt_disconnect,
-	.iface_status  		= ra_erpc_mgmt_iface_status,
-	.reg_domain         = ra_erpc_mgmt_reg_domain,
 #ifdef CONFIG_WIFI_RA_ERPC_SOFTAP_SUPPORT
 	.ap_enable     		= NULL,
 	.ap_disable    		= NULL,
@@ -401,7 +328,6 @@ static int ra_erpc_init(const struct device *dev)
 	k_work_init(&data->scan_work, ra_erpc_mgmt_scan_work);
 	k_work_init(&data->connect_work, ra_erpc_mgmt_connect_work);
 	k_work_init(&data->disconnect_work, ra_erpc_mgmt_disconnect_work);
-	//k_work_init(&data->iface_status_work, ra_erpc_mgmt_iface_status_work);
 
 	/* Initialize the work queue */
 	k_work_queue_start(&data->workq, ra_erpc_workq_stack,
