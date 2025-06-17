@@ -423,7 +423,7 @@ static void erpc_server_thread()
 
 void my_thread(void *arg1, void *arg2, void *arg3) {
     while (1) {
-        printk("Polling server\n");
+        //printk("Polling server\n");
         erpc_status_t err = erpc_server_poll(server);
         if (err != kErpcStatus_Success)
         {
@@ -436,4 +436,9 @@ void my_thread(void *arg1, void *arg2, void *arg3) {
 void my_async_func(uint8_t param)
 {
     printf("Running my_async_func! param=%d\n", param);
+}
+
+void my_oneway_async_func(uint8_t param)
+{
+    printf("Running my_oneway_async_func! param=%d\n", param);
 }

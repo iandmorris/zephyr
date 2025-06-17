@@ -28,6 +28,7 @@ struct ra_erpc_data {
 };
 
 void my_async_func(uint8_t param);
+void my_oneway_async_func(uint8_t param);
 #ifdef __cplusplus
 }
 #endif
