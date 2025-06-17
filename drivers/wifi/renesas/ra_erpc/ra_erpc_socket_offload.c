@@ -247,12 +247,17 @@ static int ra_erpc_socket_accept(void *obj, struct sockaddr *addr, socklen_t *ad
 	LOG_DBG("fd: %d", sock->fd);
 
 	ret = ra6w1_accept(sock->fd, &addr_ra_erpc, addrlen);
+    LOG_DBG("ra6w1_accept error: %d", ret);
 	if (ret < 0) {
 		return ret;
 	}
 
-	ret = ra_erpc_socket_addr_to_posix(addr, &addr_ra_erpc);
-
+    // TODO - you cannot overwrite ret here, accept returns a new file descriptor refferring to the connected socket
+    // If you overwrite, you cannot send/receive any data!
+    // ra_erpc_socket_addr_to_posix() calls ra_erpc_socket_family_to_posix() which always returns zero, overwriting the file descriptor
+    //ret = ra_erpc_socket_addr_to_posix(addr, &addr_ra_erpc);
+	int ret_posix = ra_erpc_socket_addr_to_posix(addr, &addr_ra_erpc);
+    LOG_DBG("ra_erpc_socket_addr_to_posix error: %d", ret_posix);
 	return ret;
 }
 
