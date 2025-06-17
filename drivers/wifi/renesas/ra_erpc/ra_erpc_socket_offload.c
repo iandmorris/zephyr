@@ -24,6 +24,8 @@ LOG_MODULE_REGISTER(wifi_ra_erpc_socket_offload, CONFIG_WIFI_LOG_LEVEL);
 #include "ra_erpc.h"
 #include "c_wifi_client.h"
 
+#include <zephyr/net/socket.h>
+
 // TODO - can these come from wifi_common file in service?
 #define RA_ERPC_AF_INET		2
 #define RA_ERPC_AF_INET6		10
@@ -258,7 +260,10 @@ static int ra_erpc_socket_accept(void *obj, struct sockaddr *addr, socklen_t *ad
     //ret = ra_erpc_socket_addr_to_posix(addr, &addr_ra_erpc);
 	int ret_posix = ra_erpc_socket_addr_to_posix(addr, &addr_ra_erpc);
     LOG_DBG("ra_erpc_socket_addr_to_posix error: %d", ret_posix);
-	return ret;
+	
+    // TODO we need to register the new fd with the socket_op_vtable somehow
+    
+    return ret;
 }
 
 static ssize_t ra_erpc_socket_sendto(void *obj, const void *buf, size_t len, int flags,
