@@ -16,6 +16,7 @@ menuconfig WIFI_RA_ERPC
 	# eRPC
 	select ERPC
 	select ERPC_TRANSPORT_UART
+    select ERPC_ARBITRATED_CLIENT
 
 if WIFI_RA_ERPC
 

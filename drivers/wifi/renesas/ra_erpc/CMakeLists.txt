@@ -8,6 +8,10 @@ if(CONFIG_WIFI_RA_ERPC)
 	service/c_wifi_client.cpp
 	service/wifi_client.cpp
 	service/wifi_interface.cpp
+
+    service/c_wifi_async_server.cpp
+	service/wifi_async_server.cpp
+	service/wifi_async_interface.cpp
   )
   zephyr_include_directories(
 	.

@@ -349,7 +349,7 @@ manifest:
       path: modules/lib/picolibc
       revision: 560946f26db075c296beea5b39d99e6de43c9010
     - name: ra_erpc_service
-      revision: 7f47066df5e521f022f413dc2355438bd97f6169
+      revision: c0b22d5b8850d887d166f342f289ae78255586e3
       path: zephyr/drivers/wifi/renesas/ra_erpc/service
       url: https://github.com/Renesas-US-Connectivity/ra_wifi_erpc_service
     - name: segger

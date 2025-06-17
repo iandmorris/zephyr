@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "zephyr/kernel.h"
 #define DT_DRV_COMPAT renesas_ra_erpc
 
 #include <stdlib.h>
@@ -15,12 +16,32 @@ LOG_MODULE_REGISTER(wifi_ra_erpc, CONFIG_WIFI_LOG_LEVEL);
 #include <zephyr/net/wifi_utils.h>
 #include <zephyr/net/conn_mgr/connectivity_wifi_mgmt.h>
 #include <erpc_client_setup.h>
+#include <erpc_server_setup.h>
 #include <erpc_transport_setup.h>
 #include <erpc_mbf_setup.h>
+#include <erpc_arbitrated_client_setup.h>
 
 #include "ra_erpc.h"
 #include "ra_erpc_socket_offload.h"
 #include "c_wifi_client.h"
+#include "c_wifi_async_server.h"
+
+#include <stdio.h>
+
+
+erpc_server_t server;
+void my_thread(void *arg1, void *arg2, void *arg3);
+//static void erpc_server_thread();
+//#define ERPC_SERVER_STACK_SIZE 1024
+
+//K_THREAD_STACK_DEFINE(erpc_server_stack_area, ERPC_SERVER_STACK_SIZE)
+//struct k_thread erpc_server_thread_data;
+
+#define STACK_SIZE 1024
+#define PRIORITY 5
+
+K_THREAD_STACK_DEFINE(my_stack_area, STACK_SIZE);
+static struct k_thread my_thread_data;
 
 K_KERNEL_STACK_DEFINE(ra_erpc_workq_stack,
 		      CONFIG_WIFI_RA_ERPC_WORKQ_STACK_SIZE);
@@ -315,7 +336,10 @@ static int ra_erpc_init(const struct device *dev)
 {
     erpc_transport_t transport;
     erpc_mbf_t message_buffer_factory;
+    erpc_transport_t arbitrator;
     erpc_client_t client_manager;
+    erpc_service_t service;
+
 	struct ra_erpc_data *data = dev->data;
 
 	/* Temporary fix to allow RA6W1 to empty UART buffer of incorrect
@@ -353,7 +377,7 @@ static int ra_erpc_init(const struct device *dev)
 		return -ENODEV;
 	}
 
-	client_manager = erpc_client_init(transport, message_buffer_factory);
+    client_manager = erpc_arbitrated_client_init(transport, message_buffer_factory, &arbitrator);
 	if (client_manager == NULL) {
 		LOG_ERR("Failed to initialize eRPC client");
 		return -ENODEV;
@@ -361,7 +385,55 @@ static int ra_erpc_init(const struct device *dev)
 
 	initwifi_client(client_manager);
 
+    server = erpc_server_init(arbitrator, message_buffer_factory);
+
+    service = create_wifi_async_service();
+    /* Add custom service implementation to the server */
+    erpc_add_service_to_server(server, service);
+
+    /*k_tid_t erpc_server_tid = k_thread_create(&erpc_server_thread_data,
+                                              erpc_server_stack_area,
+                                              K_THREAD_STACK_SIZEOF(erpc_server_stack_area),
+                                              erpc_server_thread,
+                                              NULL,
+                                              NULL,
+                                              NULL,
+                                              K_LOWEST_APPLICATION_THREAD_PRIO,
+                                              0,
+                                              K_NO_WAIT)*/
+
+    k_thread_create(&my_thread_data, my_stack_area, STACK_SIZE,
+                    my_thread,
+                    NULL, NULL, NULL,  // arguments
+                    PRIORITY, 0,       // priority and options
+                    K_NO_WAIT);        // start immediately
+
 	data->net_iface = NET_IF_GET(Z_DEVICE_DT_DEV_ID(DT_DRV_INST(0)), 0);
 
 	return 0;
+}
+
+static void erpc_server_thread()
+{
+    while(true) {
+        erpc_server_poll(server);
+        k_msleep(1000);
+    }
+}
+
+void my_thread(void *arg1, void *arg2, void *arg3) {
+    while (1) {
+        printk("Polling server\n");
+        erpc_status_t err = erpc_server_poll(server);
+        if (err != kErpcStatus_Success)
+        {
+            printk("eRPC server poll error=%d\n", err);
+        }
+        k_sleep(K_SECONDS(1));
+    }
+}
+
+void my_async_func(uint8_t param)
+{
+    printf("Running my_async_func! param=%d\n", param);
 }
