@@ -26,28 +26,20 @@ LOG_MODULE_REGISTER(wifi_ra_erpc, CONFIG_WIFI_LOG_LEVEL);
 #include "c_wifi_client.h"
 #include "c_wifi_async_server.h"
 
-#include <stdio.h>
-
+#define SERVER_THREAD_STACK_SIZE 1024
+#define SERVER_THREAD_PRIORITY 5
 
 erpc_server_t server;
-void my_thread(void *arg1, void *arg2, void *arg3);
-//static void erpc_server_thread();
-//#define ERPC_SERVER_STACK_SIZE 1024
+void erpc_server_thread(void *arg1, void *arg2, void *arg3);
+void erpc_client_error_handler(erpc_status_t err, uint32_t functionID);
 
-//K_THREAD_STACK_DEFINE(erpc_server_stack_area, ERPC_SERVER_STACK_SIZE)
-//struct k_thread erpc_server_thread_data;
-
-#define STACK_SIZE 1024
-#define PRIORITY 5
-
-K_THREAD_STACK_DEFINE(my_stack_area, STACK_SIZE);
-static struct k_thread my_thread_data;
+K_THREAD_STACK_DEFINE(erpc_server_stack_area, SERVER_THREAD_STACK_SIZE);
+static struct k_thread erpc_server_thread_data;
 
 K_KERNEL_STACK_DEFINE(ra_erpc_workq_stack,
 		      CONFIG_WIFI_RA_ERPC_WORKQ_STACK_SIZE);
 
 struct ra_erpc_data ra_erpc_driver_data;
-static void erpc_client_error_handler(erpc_status_t err, uint32_t functionID);                                      
 
 static inline enum wifi_security_type drv_to_wifi_mgmt_sec(int drv_security_type)
 {
@@ -384,31 +376,22 @@ static int ra_erpc_init(const struct device *dev)
 		return -ENODEV;
 	}
 
+    // Init eRPC client interface
     erpc_client_set_error_handler(client_manager, erpc_client_error_handler);
-
 	initwifi_client(client_manager);
 
-    server = erpc_server_init(arbitrator, message_buffer_factory);
-
+    // Init eRPC server interface
+    server = erpc_server_init(arbitrator, message_buffer_factory);    
     service = create_wifi_async_service();
     /* Add custom service implementation to the server */
     erpc_add_service_to_server(server, service);
 
-    /*k_tid_t erpc_server_tid = k_thread_create(&erpc_server_thread_data,
-                                              erpc_server_stack_area,
-                                              K_THREAD_STACK_SIZEOF(erpc_server_stack_area),
-                                              erpc_server_thread,
-                                              NULL,
-                                              NULL,
-                                              NULL,
-                                              K_LOWEST_APPLICATION_THREAD_PRIO,
-                                              0,
-                                              K_NO_WAIT)*/
-
-    k_thread_create(&my_thread_data, my_stack_area, STACK_SIZE,
-                    my_thread,
+    k_thread_create(&erpc_server_thread_data, 
+                    erpc_server_stack_area, 
+                    SERVER_THREAD_STACK_SIZE,
+                    erpc_server_thread,
                     NULL, NULL, NULL,  // arguments
-                    PRIORITY, 0,       // priority and options
+                    SERVER_THREAD_PRIORITY, 0,       // priority and options
                     K_NO_WAIT);        // start immediately
 
 	data->net_iface = NET_IF_GET(Z_DEVICE_DT_DEV_ID(DT_DRV_INST(0)), 0);
@@ -423,32 +406,30 @@ void erpc_client_error_handler(erpc_status_t err, uint32_t functionID)
         LOG_ERR("eRPC client error. err=%d, functionID=%d\n", err, functionID);
     }
 }     
-static void erpc_server_thread()
-{
-    while(true) {
-        erpc_server_poll(server);
-        k_msleep(1000);
-    }
-}
 
-void my_thread(void *arg1, void *arg2, void *arg3) {
+// This thread polls the server interface (e.g. has RA6W1 called `async` function)
+void erpc_server_thread(void *arg1, void *arg2, void *arg3) {
     while (1) {
-        //printk("Polling server\n");
+        // TODO should we use erpc_server_run() instead? 
         erpc_status_t err = erpc_server_poll(server);
         if (err != kErpcStatus_Success)
         {
-            printk("eRPC server poll error=%d\n", err);
+            LOG_ERR("erpc_server_poll() error=%d\n", err);
         }
+        // TODO remove sleep
         k_sleep(K_SECONDS(1));
     }
 }
 
+// These are functions defined in the interface. We can use them to inform zephyr of
+// asnyc events on RA6W1
 void my_async_func(uint8_t param)
 {
-    printf("Running my_async_func! param=%d\n", param);
+    // TODO there is a thread issue with log if these async functions called in quick succession 
+    LOG_DBG("Running my_async_func! param=%d\n", param);
 }
 
 void my_oneway_async_func(uint8_t param)
 {
-    printf("Running my_oneway_async_func! param=%d\n", param);
+    LOG_DBG("Running my_oneway_async_func! param=%d\n", param);
 }
