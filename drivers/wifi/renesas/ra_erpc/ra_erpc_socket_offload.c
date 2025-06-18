@@ -24,6 +24,8 @@ LOG_MODULE_REGISTER(wifi_ra_erpc_socket_offload, CONFIG_WIFI_LOG_LEVEL);
 #include "ra_erpc.h"
 #include "c_wifi_client.h"
 
+#include <zephyr/net/socket.h>
+
 // TODO - can these come from wifi_common file in service?
 #define RA_ERPC_AF_INET		2
 #define RA_ERPC_AF_INET6		10
@@ -36,6 +38,7 @@ struct ra_erpc_socket {
 };
 
 static struct ra_erpc_socket sockets[RA_ERPC_MAX_SOCKETS];
+static const struct socket_op_vtable ra_erpc_socket_fd_op_vtable;
 
 static int ra_erpc_socket_family_to_posix(uint8_t family_ra_erpc, int *family)
 {
@@ -239,21 +242,54 @@ static int ra_erpc_socket_listen(void *obj, int backlog)
 
 static int ra_erpc_socket_accept(void *obj, struct sockaddr *addr, socklen_t *addrlen)
 {
-	int ret;
+	int conn_fd;
 	struct ra_erpc_sockaddr addr_ra_erpc;
 	struct ra_erpc_socket *sock = (struct ra_erpc_socket *)obj;
 
 	LOG_DBG("ra_erpc_socket_accept");
 	LOG_DBG("fd: %d", sock->fd);
 
-	ret = ra6w1_accept(sock->fd, &addr_ra_erpc, addrlen);
-	if (ret < 0) {
+    // reserve a file descriptor
+    int fd = zvfs_reserve_fd();
+
+    // Accept returns file descriptor for new connected socket
+	conn_fd = ra6w1_accept(sock->fd, &addr_ra_erpc, addrlen);
+    LOG_DBG("ra6w1_accept: %d", conn_fd);
+	if (conn_fd < 0) {
+        zvfs_free_fd(fd);
+		return conn_fd;
+	}
+
+	int ret = ra_erpc_socket_addr_to_posix(addr, &addr_ra_erpc);
+    if (ret < 0) {
+        zvfs_free_fd(fd);
+        LOG_DBG("ra_erpc_socket_addr_to_posix error: %d", ret);
 		return ret;
 	}
 
-	ret = ra_erpc_socket_addr_to_posix(addr, &addr_ra_erpc);
+    // keep track of the new fd returned by accept
+    struct ra_erpc_socket *socket = NULL;
+    for (int i = 0; i < RA_ERPC_MAX_SOCKETS; i++) {
+        if (sockets[i].in_use == false) {
+            sockets[i].fd = conn_fd;
+            sockets[i].in_use = true;
+            socket = &sockets[i];
+            break;
+        }
+	}
 
-	return ret;
+    if (socket == NULL){
+		zvfs_free_fd(fd);
+		return -1;
+	}
+
+    // associate zephyr file descriptor with the socket obj and offload table
+    // ensures subsequent socket operations using zephyr fd will use the appropriate RA6W1 fd
+	zvfs_finalize_typed_fd(fd, socket,
+			    (const struct fd_op_vtable *)&ra_erpc_socket_fd_op_vtable,
+			    ZVFS_MODE_IFSOCK);
+            
+    return fd;
 }
 
 static ssize_t ra_erpc_socket_sendto(void *obj, const void *buf, size_t len, int flags,

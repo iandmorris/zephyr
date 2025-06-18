@@ -47,6 +47,7 @@ K_KERNEL_STACK_DEFINE(ra_erpc_workq_stack,
 		      CONFIG_WIFI_RA_ERPC_WORKQ_STACK_SIZE);
 
 struct ra_erpc_data ra_erpc_driver_data;
+static void erpc_client_error_handler(erpc_status_t err, uint32_t functionID);                                      
 
 static inline enum wifi_security_type drv_to_wifi_mgmt_sec(int drv_security_type)
 {
@@ -383,6 +384,8 @@ static int ra_erpc_init(const struct device *dev)
 		return -ENODEV;
 	}
 
+    erpc_client_set_error_handler(client_manager, erpc_client_error_handler);
+
 	initwifi_client(client_manager);
 
     server = erpc_server_init(arbitrator, message_buffer_factory);
@@ -413,6 +416,13 @@ static int ra_erpc_init(const struct device *dev)
 	return 0;
 }
 
+void erpc_client_error_handler(erpc_status_t err, uint32_t functionID)
+{
+    if(err > 0) {
+        // see wifi_interface.hpp for list of function IDs
+        LOG_ERR("eRPC client error. err=%d, functionID=%d\n", err, functionID);
+    }
+}     
 static void erpc_server_thread()
 {
     while(true) {
