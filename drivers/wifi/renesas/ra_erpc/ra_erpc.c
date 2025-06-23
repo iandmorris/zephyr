@@ -416,8 +416,6 @@ void erpc_server_thread(void *arg1, void *arg2, void *arg3) {
         {
             LOG_ERR("erpc_server_poll() error=%d\n", err);
         }
-        // TODO remove sleep
-        k_sleep(K_SECONDS(1));
     }
 }
 
