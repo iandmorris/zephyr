@@ -6,3 +6,21 @@ description: Renesas WiFi modem (eRPC)
 compatible: "renesas,ra-erpc"
 
 include: uart-device.yaml
+
+properties:
+  reset-gpios:
+    type: phandle-array
+    description: |
+      This gpio is used to reset the Wi-Fi device.
+
+  reset-assert-duration-ms:
+    type: int
+    description: |
+      Minimum duration to activate the reset-gpios pin.
+      If not specified no delay beyond the code path execution time is guaranteed.
+
+  boot-duration-ms:
+    type: int
+    default: 200
+    description: |
+      Minimum time to wait for the device to boot following a hardware reset.
