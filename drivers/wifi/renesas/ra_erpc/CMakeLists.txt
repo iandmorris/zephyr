@@ -5,13 +5,13 @@ if(CONFIG_WIFI_RA_ERPC)
   zephyr_library_sources(
     ra_erpc.c
 	ra_erpc_socket_offload.c
-	service/c_wifi_client.cpp
-	service/wifi_client.cpp
-	service/wifi_interface.cpp
+	service/c_wifi_host_to_ra_client.cpp
+	service/wifi_host_to_ra_client.cpp
+	service/wifi_host_to_ra_interface.cpp
 
-    service/c_wifi_async_server.cpp
-	service/wifi_async_server.cpp
-	service/wifi_async_interface.cpp
+    service/c_wifi_ra_to_host_server.cpp
+	service/wifi_ra_to_host_server.cpp
+	service/wifi_ra_to_host_interface.cpp
   )
   zephyr_include_directories(
 	.

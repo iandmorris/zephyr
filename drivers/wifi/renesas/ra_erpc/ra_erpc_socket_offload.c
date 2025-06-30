@@ -22,7 +22,8 @@ LOG_MODULE_REGISTER(wifi_ra_erpc_socket_offload, CONFIG_WIFI_LOG_LEVEL);
 #include "sockets_internal.h"
 
 #include "ra_erpc.h"
-#include "c_wifi_client.h"
+#include "c_wifi_host_to_ra_client.h"
+#include "c_wifi_ra_to_host_client.h"
 
 #include <zephyr/net/socket.h>
 
