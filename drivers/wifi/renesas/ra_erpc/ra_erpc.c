@@ -23,8 +23,8 @@ LOG_MODULE_REGISTER(wifi_ra_erpc, CONFIG_WIFI_LOG_LEVEL);
 
 #include "ra_erpc.h"
 #include "ra_erpc_socket_offload.h"
-#include "c_wifi_client.h"
-#include "c_wifi_async_server.h"
+#include "c_wifi_host_to_ra_client.h"
+#include "c_wifi_ra_to_host_server.h"
 
 #define SERVER_THREAD_STACK_SIZE 1024
 #define SERVER_THREAD_PRIORITY 5
