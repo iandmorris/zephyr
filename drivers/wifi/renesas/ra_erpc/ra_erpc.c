@@ -426,7 +426,6 @@ void ra_erpc_server_event_handler(const ra_erp_server_event_t * event)
     switch(event->event_id) {
         case eNetworkInterfaceIPAssigned:
         {
-             LOG_DBG("ra_erpc_server_event_handler. event_data=%08X\n", event->event_data.data);
             struct in_addr addr;
             memcpy(&addr, &event->event_data.data, sizeof(event->event_data.data));
             char buf[INET_ADDRSTRLEN ];
