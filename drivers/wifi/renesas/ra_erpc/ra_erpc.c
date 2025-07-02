@@ -15,6 +15,7 @@ LOG_MODULE_REGISTER(wifi_ra_erpc, CONFIG_WIFI_LOG_LEVEL);
 #include <zephyr/net/wifi_mgmt.h>
 #include <zephyr/net/wifi_utils.h>
 #include <zephyr/net/conn_mgr/connectivity_wifi_mgmt.h>
+#include <zephyr/net/net_ip.h>
 #include <erpc_client_setup.h>
 #include <erpc_server_setup.h>
 #include <erpc_transport_setup.h>
@@ -419,15 +420,22 @@ void erpc_server_thread(void *arg1, void *arg2, void *arg3) {
     }
 }
 
-// These are functions defined in the interface. We can use them to inform zephyr of
-// asnyc events on RA6W1
-void my_async_func(uint8_t param)
+void ra_erpc_server_event_handler(const ra_erp_server_event_t * event)
 {
-    // TODO there is a thread issue with log if these async functions called in quick succession 
-    LOG_DBG("Running my_async_func! param=%d\n", param);
-}
-
-void my_oneway_async_func(uint8_t param)
-{
-    LOG_DBG("Running my_oneway_async_func! param=%d\n", param);
+    LOG_DBG("ra_erpc_server_event_handler. event_id=%d\n", event->event_id);
+    switch(event->event_id) {
+        case eNetworkInterfaceIPAssigned:
+        {
+             LOG_DBG("ra_erpc_server_event_handler. event_data=%08X\n", event->event_data.data);
+            struct in_addr addr;
+            memcpy(&addr, &event->event_data.data, sizeof(event->event_data.data));
+            char buf[INET_ADDRSTRLEN ];
+            if (net_addr_ntop(AF_INET, &addr, buf, sizeof(buf))) {
+                LOG_DBG("IPv4 addr = %s\n", buf);
+            }
+            break;
+        }
+        default:
+            break;
+    }
 }

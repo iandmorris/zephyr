@@ -27,8 +27,6 @@ struct ra_erpc_data {
 	struct k_work disconnect_work;
 };
 
-void my_async_func(uint8_t param);
-void my_oneway_async_func(uint8_t param);
 #ifdef __cplusplus
 }
 #endif
