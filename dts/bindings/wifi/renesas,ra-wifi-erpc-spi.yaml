@@ -1,0 +1,13 @@
+# Copyright (c) 2025 Renesas Electronics Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+description: Renesas WiFi modem (eRPC over SPI)
+
+compatible: "renesas,ra-wifi-erpc-spi"
+
+include: ["renesas,ra-erpc.yaml", "spi-controller.yaml"]
+
+properties:
+  int-gpios:
+    type: phandle-array
+    required: true
