@@ -9,6 +9,7 @@ menuconfig WIFI_RA_ERPC
 	select NET_L2_WIFI_MGMT
 	select NET_OFFLOAD
 	select NET_SOCKETS_OFFLOAD
+	select NET_SOCKETS
 
 	# C++ Language Support (required by eRPC module)
 	select CPP
