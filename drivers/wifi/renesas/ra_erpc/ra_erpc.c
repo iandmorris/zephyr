@@ -27,9 +27,14 @@ LOG_MODULE_REGISTER(wifi_ra_erpc, CONFIG_WIFI_LOG_LEVEL);
 #include "c_wifi_host_to_ra_client.h"
 #include "c_wifi_ra_to_host_server.h"
 
+// TODO - make these Kconfig symbols?
 #define SERVER_THREAD_STACK_SIZE 1024
 #define SERVER_THREAD_PRIORITY 5
 
+// TODO - use a better name and make a Kconfig symbol
+#define IP_ASSIGN_TIMEOUT		K_SECONDS(5)
+
+// TODO can all these be static?
 erpc_server_t server;
 void erpc_server_thread(void *arg1, void *arg2, void *arg3);
 void erpc_client_error_handler(erpc_status_t err, uint32_t functionID);
@@ -40,7 +45,10 @@ static struct k_thread erpc_server_thread_data;
 K_KERNEL_STACK_DEFINE(ra_erpc_workq_stack,
 		      CONFIG_WIFI_RA_ERPC_WORKQ_STACK_SIZE);
 
+// TODO can this be static?
 struct ra_erpc_data ra_erpc_driver_data;
+
+static K_SEM_DEFINE(ip_acquired, 0, 1);
 
 static inline enum wifi_security_type drv_to_wifi_mgmt_sec(int drv_security_type)
 {
@@ -207,10 +215,6 @@ static void ra_erpc_mgmt_connect_work(struct k_work *work)
 {
 	struct ra_erpc_data *dev;
 	WIFIReturnCode_t ret;
-	//WIFIIPConfiguration_t ip_config;
-	//struct in_addr ip_addr;
-	//struct in_addr gw_addr;
-	//struct in_addr netmask;
 	int status = 0;
 
 	dev = CONTAINER_OF(work, struct ra_erpc_data, connect_work);
@@ -227,27 +231,26 @@ static void ra_erpc_mgmt_connect_work(struct k_work *work)
 	LOG_DBG("WIFI_ConnectAP: %d", ret);
 
 	if (ret) {
+		// TODO - return a better error code, any cleanup required?
 		status = -1;
+		goto complete;
 	}
 
-	// TODO - this is not working at present, just returns 0.0.0.0 for all IP addresses...
-	//ret = WIFI_GetIPInfo(&ip_config);
+	/* Wait for DHCP process on offload device to complete */
+	ret = k_sem_take(&ip_acquired, IP_ASSIGN_TIMEOUT);
+	if (ret < 0) {
+		// TODO - return a better error code, any cleanup required?	
+		status = -1;
+		goto complete;
+	}
 
-	//LOG_DBG("WIFI_GetIPInfo: %d", ret);
-
-	//if (ret == eWiFiSuccess) {
-	//	memcpy(ip_addr.s_addr, &ip_config.xIPAddress.ulAddress, sizeof(ip_addr.s_addr));
-	//	memcpy(gw_addr.s_addr, &ip_config.xGateway.ulAddress, sizeof(gw_addr.s_addr));
-	//	memcpy(netmask.s_addr, &ip_config.xNetMask.ulAddress, sizeof(netmask.s_addr));
-
-	//	net_if_ipv4_addr_add(dev->net_iface, &ip_addr, NET_ADDR_DHCP, 0);
-	//	net_if_ipv4_set_gw(dev->net_iface, &gw_addr);
-	//	net_if_ipv4_set_netmask_by_addr(dev->net_iface, &ip_addr, &netmask);
-	//}
-
-	wifi_mgmt_raise_connect_result_event(dev->net_iface, status);
-	// TODO - don't do this if not connected
+	net_if_ipv4_addr_add(dev->net_iface, &dev->ip_addr, NET_ADDR_DHCP, 0);
+	net_if_ipv4_set_gw(dev->net_iface, &dev->gw_addr);
+	net_if_ipv4_set_netmask_by_addr(dev->net_iface, &dev->ip_addr, &dev->netmask);
 	net_if_dormant_off(dev->net_iface);
+
+complete:
+	wifi_mgmt_raise_connect_result_event(dev->net_iface, status);
 }
 
 static int ra_erpc_mgmt_disconnect(const struct device *dev)
@@ -359,7 +362,7 @@ static int ra_erpc_init(const struct device *dev)
 	k_thread_name_set(&data->workq.thread, "ra_erpc_workq");
 
     /* Initialize the eRPC client infrastructure */
-    transport = erpc_transport_zephyr_uart_init(data->bus);
+    transport = erpc_transport_zephyr_uart_init((void *)data->bus);
 	if (transport == NULL) {
 		LOG_ERR("Failed to initialize eRPC transport");
 		return -ENODEV;
@@ -422,14 +425,19 @@ void erpc_server_thread(void *arg1, void *arg2, void *arg3) {
 
 void ra_erpc_server_event_handler(const ra_erp_server_event_t * event)
 {
-    LOG_DBG("ra_erpc_server_event_handler. event_id=%d\n", event->event_id);
+    LOG_DBG("ra_erpc_server_event_handler - event_id: %d", event->event_id);
+
     switch(event->event_id) {
         case eNetworkInterfaceIPAssigned:
         {
-            struct in_addr addr;
-            memcpy(&addr, &event->event_data.data, sizeof(event->event_data.data));
+            //struct in_addr addr;
+            //memcpy(&addr, &event->event_data.data, sizeof(event->event_data.data));
+
+			memcpy(&ra_erpc_driver_data.ip_addr, &event->event_data.data, sizeof(event->event_data.data));
+			k_sem_give(&ip_acquired);
+
             char buf[INET_ADDRSTRLEN ];
-            if (net_addr_ntop(AF_INET, &addr, buf, sizeof(buf))) {
+            if (net_addr_ntop(AF_INET, &ra_erpc_driver_data.ip_addr, buf, sizeof(buf))) {
                 LOG_DBG("IPv4 addr = %s\n", buf);
             }
             break;

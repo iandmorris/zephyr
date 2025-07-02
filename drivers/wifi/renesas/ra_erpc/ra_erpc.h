@@ -20,6 +20,9 @@ struct ra_erpc_data {
 	scan_result_cb_t scan_cb;
 	uint16_t scan_max_bss_cnt;
 	struct WIFINetworkParams_t drv_nwk_params;
+	struct in_addr ip_addr;
+	struct in_addr gw_addr;
+	struct in_addr netmask;
 
 	struct k_work_q workq;
 	struct k_work scan_work;
