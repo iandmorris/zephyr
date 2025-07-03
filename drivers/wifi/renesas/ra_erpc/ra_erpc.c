@@ -430,10 +430,10 @@ void ra_erpc_server_event_handler(const ra_erp_server_event_t * event)
     switch(event->event_id) {
         case eNetworkInterfaceIPAssigned:
         {
-            //struct in_addr addr;
-            //memcpy(&addr, &event->event_data.data, sizeof(event->event_data.data));
-
 			memcpy(&ra_erpc_driver_data.ip_addr, &event->event_data.data, sizeof(event->event_data.data));
+			memcpy(&ra_erpc_driver_data.ip_addr, &event->event_data.xConfig.xIPAddress.ulAddress[0], sizeof(ra_erpc_driver_data.ip_addr));
+			memcpy(&ra_erpc_driver_data.gw_addr, &event->event_data.xConfig.xGateway.ulAddress[0], sizeof(ra_erpc_driver_data.gw_addr));
+			memcpy(&ra_erpc_driver_data.netmask, &event->event_data.xConfig.xNetMask.ulAddress[0], sizeof(ra_erpc_driver_data.netmask));
 			k_sem_give(&ip_acquired);
 
             char buf[INET_ADDRSTRLEN ];
