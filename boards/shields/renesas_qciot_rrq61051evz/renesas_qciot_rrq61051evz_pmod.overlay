@@ -1,0 +1,14 @@
+/*
+ * Copyright (c) 2025 Renesas Electronics Corporation
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&pmod_serial {
+	status = "okay";
+
+	qciot_rrq61051evz: ra6w1 {
+		compatible = "renesas,ra-erpc";
+		reset-gpios = <&pmod_header 5 GPIO_ACTIVE_LOW>;
+	};
+};

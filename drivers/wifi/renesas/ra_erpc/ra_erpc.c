@@ -16,6 +16,7 @@ LOG_MODULE_REGISTER(wifi_ra_erpc, CONFIG_WIFI_LOG_LEVEL);
 #include <zephyr/net/wifi_utils.h>
 #include <zephyr/net/conn_mgr/connectivity_wifi_mgmt.h>
 #include <zephyr/net/net_ip.h>
+#include <zephyr/drivers/gpio.h>
 #include <erpc_client_setup.h>
 #include <erpc_server_setup.h>
 #include <erpc_transport_setup.h>
@@ -467,6 +468,42 @@ static int ra_erpc_init(const struct device *dev)
 					K_NO_WAIT);
 
 	data->net_iface = NET_IF_GET(Z_DEVICE_DT_DEV_ID(DT_DRV_INST(0)), 0);
+
+#if DT_INST_NODE_HAS_PROP(0, reset_gpios)
+	int err = 0;
+	struct gpio_dt_spec wifi_reset = GPIO_DT_SPEC_GET(DT_DRV_INST(0), reset_gpios);
+
+	if (!gpio_is_ready_dt(&wifi_reset)) {
+		LOG_ERR("Error: failed to configure wifi_reset %s pin %d", wifi_reset.port->name,
+			wifi_reset.pin);
+		return -EIO;
+	}
+
+	/* Set wifi_reset as output and activate reset */
+	err = gpio_pin_configure_dt(&wifi_reset, GPIO_OUTPUT_ACTIVE);
+	if (err) {
+		LOG_ERR("Error %d: failed to configure wifi_reset %s pin %d", err,
+			wifi_reset.port->name, wifi_reset.pin);
+		return err;
+	}
+
+	k_sleep(K_MSEC(DT_INST_PROP_OR(0, reset_assert_duration_ms, 0)));
+
+	/* Release the device from reset */
+	err = gpio_pin_configure_dt(&wifi_reset, GPIO_OUTPUT_INACTIVE);
+	if (err) {
+		return err;
+	}
+
+	// TODO - maybe drain the UART receive buffer to get rid of bad data sent while lines toggling during reset?
+
+	/* Wait for the device to finish booting */
+	k_sleep(K_MSEC(DT_INST_PROP(0, boot_duration_ms)));
+
+
+	// TODO - replace the above with waiting for reset message from RA6W1, can then also get rid of this Kconfig symbol
+
+#endif /* DT_INST_NODE_HAS_PROP(0, reset_gpios) */
 
 	return 0;
 }

@@ -1,0 +1,12 @@
+shields:
+  - name: renesas_qciot_rrq61051evz_mikrobus
+    full_name: QCIOT RRQ61051EVZ Board
+    vendor: renesas
+    supported_features:
+      - wifi
+
+  - name: renesas_qciot_rrq61051evz_pmod
+    full_name: QCIOT RRQ61051EVZ Board
+    vendor: renesas
+    supported_features:
+      - wifi
