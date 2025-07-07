@@ -406,11 +406,6 @@ static int ra_erpc_init(const struct device *dev)
 
 	struct ra_erpc_data *data = dev->data;
 
-	// TODO - Fix this!!!!
-	/* Temporary fix to allow RA6W1 to empty UART buffer of incorrect
-	   byte(s) it receives when host MCU is reset. */
-	k_msleep(1000);
-
 	data->bus = DEVICE_DT_GET(DT_INST_BUS(0));
 
 	if (!device_is_ready(data->bus)) {
