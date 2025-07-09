@@ -361,8 +361,17 @@ static int ra_erpc_socket_setsockopt(void *obj, int level, int optname,
 			  const void *optval, socklen_t optlen)
 {
 	LOG_DBG("ra_erpc_socket_setsockopt");
+    LOG_DBG("level=%d", level);
+    LOG_DBG("optname=%d", level);
 
-	return -1;
+    int ret;
+	struct ra_erpc_socket *sock = (struct ra_erpc_socket *)obj;
+
+	ret = ra6w1_setsockopt(sock->fd, level, optname, optval, optlen);
+
+	LOG_DBG("ra6w1_setsockopt: %d", ret);
+
+	return ret;
 }
 
 static ssize_t ra_erpc_socket_sendmsg(void *obj, const struct msghdr *msg, int flags)
@@ -416,6 +425,7 @@ static const struct socket_op_vtable ra_erpc_socket_fd_op_vtable = {
 	.recvmsg = ra_erpc_socket_recvmsg,
 	.getpeername = ra_erpc_socket_getpeername,
 	.getsockname = ra_erpc_socket_getsockname,
+    .setsockopt = ra_erpc_socket_setsockopt,
 };
 
 static int ra_erpc_socket_create(int family, int type, int proto)
