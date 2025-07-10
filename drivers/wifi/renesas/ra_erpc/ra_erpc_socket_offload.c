@@ -421,7 +421,6 @@ static const struct socket_op_vtable ra_erpc_socket_fd_op_vtable = {
 	.recvmsg = ra_erpc_socket_recvmsg,
 	.getpeername = ra_erpc_socket_getpeername,
 	.getsockname = ra_erpc_socket_getsockname,
-    .setsockopt = ra_erpc_socket_setsockopt,
 };
 
 static int ra_erpc_socket_create(int family, int type, int proto)
