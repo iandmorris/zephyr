@@ -322,30 +322,25 @@ static ssize_t ra_erpc_socket_recvfrom(void *obj, void *buf, size_t max_len, int
 			    struct sockaddr *src_addr, socklen_t *addrlen)
 {
 	int ret;
-	//struct ra_erpc_sockaddr addr_ra_erpc;
+	struct ra_erpc_sockaddr addr_ra_erpc;
 	struct ra_erpc_socket *sock = (struct ra_erpc_socket *)obj;
-	uint32_t addr_len = 0;
 
 	LOG_DBG("ra_erpc_socket_recvfrom");
 	LOG_DBG("fd: %d", sock->fd);
 	LOG_DBG("max_len: %d", max_len);
 
-	// TODO - fixme!!
-	//*addrlen = sizeof(struct ra_erpc_sockaddr);
-	addr_len = sizeof(struct ra_erpc_sockaddr);
+    *addrlen = sizeof(struct ra_erpc_sockaddr);
 
-	//ret = ra6w1_recvfrom(sock->fd, buf, max_len, flags, &addr_ra_erpc, &addr_len);
-	ret = ra6w1_recv(sock->fd, buf, max_len, flags);
+	ret = ra6w1_recvfrom(sock->fd, buf, max_len, flags, &addr_ra_erpc, addrlen);
 
-	//LOG_DBG("ra6w1_recvfrom: %d", ret);
-	LOG_DBG("ra6w1_recv: %d", ret);
+	LOG_DBG("ra6w1_recvfrom: %d", ret);
 
-	//if (ret) {
-	//	// TODO - better error code
-	//	return -1;
-	//}
-
-	//ret = ra_erpc_socket_addr_to_posix(src_addr, &addr_ra_erpc);
+    if (ret > 0 && src_addr != NULL) {
+        int err = ra_erpc_socket_addr_to_posix(src_addr, &addr_ra_erpc);
+        if (err != 0) {
+            return err;
+        }
+    }
 
 	return ret;
 }
