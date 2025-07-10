@@ -310,7 +310,8 @@ static ssize_t ra_erpc_socket_sendto(void *obj, const void *buf, size_t len, int
 		return -1;
 	}
 
-	ret = ra6w1_sendto(sock->fd, buf, len, flags, &addr_ra_erpc, addrlen);
+    // TODO this is handling IPV4, need to extend for IPV6
+    ret = ra6w1_sendto(sock->fd, buf, len, flags, &addr_ra_erpc, sizeof(ra_erpc_sockaddr));
 
 	LOG_DBG("ra6w1_sendto: %d", ret);
 
