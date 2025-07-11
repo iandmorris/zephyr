@@ -349,8 +349,21 @@ static int ra_erpc_socket_getsockopt(void *obj, int level, int optname,
 			  void *optval, socklen_t *optlen)
 {
 	LOG_DBG("ra_erpc_socket_getsockopt");
+    LOG_DBG("level=%d", level);
+    LOG_DBG("optname=%d", level);
 
-	return -1;
+    int ret;
+	struct ra_erpc_socket *sock = (struct ra_erpc_socket *)obj;
+
+	ret = ra6w1_getsockopt(sock->fd, level, optname, optval, optlen);
+
+    // TODO map option defines in zephyr to RA6W1 e.g. ra_erpc_socket_option_to_posix
+    // SOL_SOCKET = 0xfff on RA6W1
+    // SO_REUSEADDR = 4 on RA6W1
+
+	LOG_DBG("ra6w1_getsockopt: %d", ret);
+
+	return ret;
 }
 
 static int ra_erpc_socket_setsockopt(void *obj, int level, int optname,
@@ -362,6 +375,10 @@ static int ra_erpc_socket_setsockopt(void *obj, int level, int optname,
 
     int ret;
 	struct ra_erpc_socket *sock = (struct ra_erpc_socket *)obj;
+
+    // TODO map option defines in zephyr to RA6W1 e.g. ra_erpc_socket_option_from_posix
+    // SOL_SOCKET = 0xfff on RA6W1
+    // SO_REUSEADDR = 4 on RA6W1
 
 	ret = ra6w1_setsockopt(sock->fd, level, optname, optval, optlen);
 
