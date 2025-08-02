@@ -1,0 +1,15 @@
+/*
+ * Copyright (c) 2025 Renesas Electronics Corporation
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&mikrobus_serial {
+	status = "okay";
+	current-speed = <115200>;
+
+	da16200 {
+		compatible = "renesas,at-wifi-uart";
+		status = "okay";
+	};
+};
