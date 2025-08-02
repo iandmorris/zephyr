@@ -1,0 +1,15 @@
+# Copyright (c) 2025 Renesas Electronics Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+if SHIELD_MIKROE_LP_WIFI_CLICK
+
+if WIFI_AT_WIFI
+
+choice WIFI_AT_WIFI_SOC_VARIANT
+	default WIFI_AT_WIFI_SOC_DA16XXX
+
+endchoice
+
+endif	# WIFI_AT_WIFI
+
+endif	# SHIELD_MIKROE_LP_WIFI_CLICK
