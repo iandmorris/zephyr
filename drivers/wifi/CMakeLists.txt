@@ -30,3 +30,5 @@ add_subdirectory_ifdef(CONFIG_WIFI_SILABS_SIWX91X siwx91x)
 add_subdirectory_ifdef(CONFIG_WIFI_SIMPLELINK simplelink)
 add_subdirectory_ifdef(CONFIG_WIFI_WINC1500 winc1500)
 # zephyr-keep-sorted-stop
+
+add_subdirectory(renesas)

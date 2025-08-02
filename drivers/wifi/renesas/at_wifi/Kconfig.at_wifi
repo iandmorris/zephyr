@@ -1,0 +1,111 @@
+# Copyright (c) 2025 Renesas Electronics Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+# TODO - move all uart selections under uart transport selected
+
+menuconfig WIFI_AT_WIFI
+	bool "Renesas RA AT Command support"
+	default y
+	depends on DT_HAS_RENESAS_AT_WIFI_UART_ENABLED || DT_HAS_RENESAS_AT_WIFI_SPI_ENABLED
+	select WIFI_AT_WIFI_TRANSPORT_UART if DT_HAS_RENESAS_AT_WIFI_UART_ENABLED
+	select WIFI_AT_WIFI_TRANSPORT_SPI if DT_HAS_RENESAS_AT_WIFI_SPI_ENABLED
+	select MODEM
+	select MODEM_CONTEXT
+	select MODEM_CMD_HANDLER
+	select WIFI_OFFLOAD
+	select NET_L2_WIFI_MGMT
+	select NET_OFFLOAD
+	select NET_SOCKETS_OFFLOAD
+	select NET_SOCKETS
+	help
+	  Enable Renesas AT Command offloaded WiFi driver.
+
+if WIFI_AT_WIFI
+
+choice WIFI_AT_WIFI_SOC_VARIANT
+	bool "Renesas Wi-Fi SoC variant selection"
+	default WIFI_AT_WIFI_SOC_DA16XXX
+
+config WIFI_AT_WIFI_SOC_DA16XXX
+	bool "DA16xxx SoC Family"
+	help
+	  Enable support for Renesas DA16xxx Wi-Fi SoC's
+
+config WIFI_AT_WIFI_SOC_RA6WX
+	bool "RA6Wx SoC Family"
+	help
+	  Enable support for Renesas RA6Wx Wi-Fi SoC's
+
+endchoice
+
+config WIFI_AT_WIFI_TRANSPORT_UART
+	bool "Enable AT UART transport"
+	select MODEM_IFACE_UART
+	imply UART_USE_RUNTIME_CONFIGURE
+	help
+	  When enabled, AT will include UART transport layer.
+
+config WIFI_AT_WIFI_TRANSPORT_SPI
+	bool "Enable AT SPI transport"
+	select SPI
+	help
+	  When enabled, AT will include SPI transport layer.
+
+config WIFI_AT_WIFI_MODEM_RING_BUF_SIZE
+	int "Modem ring buffer size"
+	default 1024
+	help
+	  Ring buffer size used by modem UART interface handler.
+
+config WIFI_AT_WIFI_MODEM_RX_BUF_COUNT
+	int "Modem RX buffer count"
+	default 30
+	help
+	  Number of preallocated RX buffers used by modem command handler.
+
+config WIFI_AT_WIFI_MODEM_RX_BUF_SIZE
+	int "Modem RX buffer size"
+	default 256
+	help
+	  Size of preallocated RX buffers used by modem command handler.
+
+config WIFI_AT_WIFI_RX_STACK_SIZE
+	int "Stack size for the Renesas RRQ AT wifi driver RX thread"
+	default 1024
+	help
+	  This stack is used by the Renesas RRQ AT RX thread.
+
+config WIFI_AT_WIFI_RX_THREAD_PRIORITY
+	int "Priority of RX thread"
+	default 7
+	help
+	  Priority of thread used for processing RX data.
+
+config WIFI_AT_WIFI_WORKQ_STACK_SIZE
+	int "Stack size for the esp driver work queue"
+	default 2048
+	help
+	  This stack is used by the work queue to pass off net_pkt data
+	  to the rest of the network stack, letting the rx thread continue
+	  processing data.
+
+config WIFI_AT_WIFI_WORKQ_THREAD_PRIORITY
+	int "Priority of work queue thread"
+	default 7
+	help
+	  Priority of thread used for processing driver work queue items.
+
+config WIFI_AT_WIFI_RESET_TIMEOUT
+	int "Reset timeout"
+	default 3000
+	help
+	  TODO
+
+# TODO - only need this if SPI transport is used
+config WIFI_AT_WIFI_HEAP_SIZE
+    int "Heap size for driver"
+    default 4096
+    help
+      TODO
+
+endif # WIFI_AT_WIFI

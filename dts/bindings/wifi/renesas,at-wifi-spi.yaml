@@ -1,0 +1,21 @@
+# Copyright (c) 2025 Renesas Electronics Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+description: Renesas WiFi offload driver (AT commands over SPI)
+
+compatible: "renesas,at-wifi-spi"
+
+include:
+  - "renesas,at-wifi.yaml"
+  - "spi-device.yaml"
+
+properties:
+  int-gpios:
+    required: true
+    type: phandle-array
+    description: |
+      TODO
+  boot-duration-ms:
+    type: int
+    description: |
+      TODO
