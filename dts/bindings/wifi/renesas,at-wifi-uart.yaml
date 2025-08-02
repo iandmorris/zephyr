@@ -1,0 +1,10 @@
+# Copyright (c) 2025 Renesas Electronics Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+description: Renesas WiFi offload driver (AT commands over UART)
+
+compatible: "renesas,at-wifi-uart"
+
+include:
+  - "renesas,at-wifi.yaml"
+  - "uart-device.yaml"
