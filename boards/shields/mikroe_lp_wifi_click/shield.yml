@@ -1,0 +1,6 @@
+shield:
+  name: mikroe_lp_wifi_click
+  full_name: LP WIFI Click
+  vendor: mikroe
+  supported_features:
+    - wifi
