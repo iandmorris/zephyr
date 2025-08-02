@@ -28,3 +28,5 @@ add_subdirectory_ifdef(CONFIG_WIFI_NXP          nxp)
 add_subdirectory_ifdef(CONFIG_WIFI_AIROC        infineon)
 add_subdirectory_ifdef(CONFIG_WIFI_NRF70        nrf_wifi)
 add_subdirectory_ifdef(CONFIG_WIFI_SILABS_SIWX91X siwx91x)
+
+add_subdirectory(renesas)
