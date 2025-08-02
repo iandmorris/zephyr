@@ -45,6 +45,7 @@ source "drivers/wifi/nxp/Kconfig.nxp"
 source "drivers/wifi/infineon/Kconfig.airoc"
 source "drivers/wifi/nrf_wifi/Kconfig.nrfwifi"
 source "drivers/wifi/siwx91x/Kconfig.siwx91x"
+source "drivers/wifi/renesas/at_wifi/Kconfig.at_wifi"
 
 # Choice is after individual drivers to enable driver specific defaults
 choice WIFI_USAGE_MODE
