@@ -1,0 +1,15 @@
+# Copyright (c) 2025 Renesas Electronics Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+if SHIELD_RENESAS_US159_DA16200MEVZ
+
+if WIFI_AT_WIFI
+
+choice WIFI_AT_WIFI_SOC_VARIANT
+	default WIFI_AT_WIFI_SOC_DA16XXX
+
+endchoice
+
+endif	# WIFI_AT_WIFI
+
+endif	# SHIELD_RENESAS_US159_DA16200MEVZ
