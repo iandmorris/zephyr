@@ -1,0 +1,6 @@
+shield:
+  name: renesas_us159_da16200mevz
+  full_name: US159-DA16200MEVZ Pmod
+  vendor: renesas
+  supported_features:
+    - wifi
