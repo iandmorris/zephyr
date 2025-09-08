@@ -1,0 +1,15 @@
+/*
+ * Copyright (c) 2025 Renesas Electronics Corporation
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&pmod_serial {
+	status = "okay";
+	current-speed = <115200>;
+
+	ra6w1 {
+		compatible = "renesas,at-wifi-uart";
+		reset-gpios = <&pmod_header 5 GPIO_ACTIVE_LOW>;
+	};
+};
