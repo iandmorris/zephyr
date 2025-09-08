@@ -1,0 +1,14 @@
+/*
+ * Copyright (c) 2025 Renesas Electronics Corporation
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&mikrobus_serial {
+	status = "okay";
+
+	qciot_rrq61051evz: ra6w1 {
+		compatible = "renesas,erpc-wifi-uart";
+		reset-gpios = <&mikrobus_header 1 GPIO_ACTIVE_LOW>;
+	};
+};
