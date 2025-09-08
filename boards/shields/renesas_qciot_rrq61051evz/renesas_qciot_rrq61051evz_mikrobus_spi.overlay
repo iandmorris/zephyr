@@ -1,0 +1,19 @@
+/*
+ * Copyright (c) 2025 Renesas Electronics Corporation
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&mikrobus_spi {
+	status = "okay";
+	cs-gpios = <&mikrobus_header 2 GPIO_ACTIVE_LOW>;
+
+	qciot_rrq61051evz: ra6w1@0 {
+		compatible = "renesas,at-wifi-spi";
+		reg = <0x0>;
+		spi-max-frequency = <100000>;
+		reset-gpios = <&mikrobus_header 1 GPIO_ACTIVE_LOW>;
+		int-gpios = <&mikrobus_header 7 GPIO_ACTIVE_LOW>;
+		boot-duration-ms = <500>;
+	};
+};
