@@ -1,0 +1,12 @@
+shields:
+  - name: renesas_qciot_rrq61051evz_mikrobus_spi
+    full_name: QCIOT RRQ61051EVZ Board (MikroBUS SPI)
+    vendor: renesas
+    supported_features:
+      - wifi
+
+  - name: renesas_qciot_rrq61051evz_pmod_uart
+    full_name: QCIOT RRQ61051EVZ Board (PMOD UART)
+    vendor: renesas
+    supported_features:
+      - wifi
