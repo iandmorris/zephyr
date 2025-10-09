@@ -1,6 +1,12 @@
-shield:
-  name: mikroe_accel13_click
-  full_name: ACCEL 13 Click
-  vendor: mikroe
-  supported_features:
-    - sensor
+shields:
+  - name: mikroe_accel13_click_i2c
+    full_name: ACCEL 13 Click (I2C)
+    vendor: mikroe
+    supported_features:
+      - sensor
+
+  - name: mikroe_accel13_click_spi
+    full_name: ACCEL 13 Click (SPI)
+    vendor: mikroe
+    supported_features:
+      - sensor
