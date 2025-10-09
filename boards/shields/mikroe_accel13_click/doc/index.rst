@@ -9,8 +9,7 @@ Overview
 The MikroElektronika ACCEL 13 Click carries the `IIS2DLPC`_ ultra-low
 power triaxial accelerometer sensor in a `mikroBUS`_ |trade| form factor.
 
-The `IIS2DLPC`_ sensor supports both SPI and I2C bus protocols. Currently
-only I2C is supported for this shield.
+The `IIS2DLPC`_ sensor supports both SPI and I2C bus protocols.
 
 .. figure:: accel-13-click.jpg
    :align: center
@@ -23,7 +22,8 @@ Requirements
 
 This shield can only be used with a development board that provides a
 configuration for mikroBUS connectors and defines a node alias for the mikroBUS
-I2C interface (see :ref:`shields` for more details).
+I2C interface or the mikroBUS SPI interface (see :ref:`shields` for more
+details).
 
 For more information about interfacing the IIS2DLPC and the ACCEL 13 Click,
 see the following documentation:
@@ -34,13 +34,14 @@ see the following documentation:
 Programming
 ***********
 
-Set ``--shield mikro_accel13_click`` when you invoke ``west build``. For
+Set ``--shield mikroe_accel13_click_i2c`` or
+``--shield mikroe_accel13_click_spi`` when you invoke ``west build``. For
 example:
 
 .. zephyr-app-commands::
    :zephyr-app: samples/sensor/sensor_shell
    :board: lpcxpresso55s69
-   :shield: mikroe_accel13_click
+   :shield: [mikroe_accel13_click_i2c | mikroe_accel13_click_spi]
    :goals: build
 
 .. _IIS2DLPC:
