@@ -1,0 +1,15 @@
+# Copyright (c) 2026 Renesas Electronics Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+properties:
+  reset-gpios:
+    type: phandle-array
+    description: |
+      This gpio is used to reset the Wi-Fi device.
+
+  reset-assert-duration-ms:
+    type: int
+    description: |
+      Minimum duration to activate the reset-gpios pin.
+      If not specified no delay beyond the code path execution time is guaranteed.
+      TODO - this not supported on DA16200, only on RA6W1 so how to handle?
