@@ -1,0 +1,9 @@
+# Copyright (c) 2026 Renesas Electronics Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+shield:
+  name: renesas_us159_da16200mevz
+  full_name: US159-DA16200MEVZ Pmod
+  vendor: renesas
+  supported_features:
+    - wifi
