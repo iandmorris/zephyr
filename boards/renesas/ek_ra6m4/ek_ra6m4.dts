@@ -137,6 +137,24 @@
 			   <7 0 &ioport7 10 0>;	/* IO8 */
 	};
 
+	grove1_header: grove-connector-1 {
+		compatible = "grove-header";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map = <0 0 &ioport5 12 0>,
+			   <1 0 &ioport5 11 0>;
+	};
+
+	grove2_header: grove-connector-2 {
+		compatible = "grove-header";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map = <0 0 &ioport5 5 0>,
+			   <1 0 &ioport5 6 0>;
+	};
+
 	buttons {
 		compatible = "gpio-keys";
 
@@ -356,6 +374,10 @@ pmod2_serial: &uart0 {};
 pmod_serial: &pmod2_serial {};
 
 pmod_header: &pmod2_header {};
+
+grove_i2c: &iic1 {};
+
+grove_header: &grove1_header {};
 
 &wdt {
 	status = "okay";
