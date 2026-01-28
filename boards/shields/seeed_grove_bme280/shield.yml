@@ -1,0 +1,6 @@
+shield:
+  name: seeed_grove_bme280
+  full_name: Grove Temperature & Humidity & Barometer Sensor (BME280) Shield
+  vendor: seeed
+  supported_features:
+    - sensor
