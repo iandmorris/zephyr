@@ -1,0 +1,14 @@
+/*
+ * Copyright (c) 2026 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&grove_i2c {
+	status = "okay";
+
+	seeed_grove_bme280: bme280@76 {
+		compatible = "bosch,bme280";
+		reg = <0x76>;
+	};
+};
