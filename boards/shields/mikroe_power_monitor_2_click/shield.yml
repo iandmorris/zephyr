@@ -1,0 +1,6 @@
+shield:
+  name: mikroe_power_monitor_2_click
+  full_name: Mikroe Power Monitor 2 Click
+  vendor: mikroe
+  supported_features:
+    - sensor

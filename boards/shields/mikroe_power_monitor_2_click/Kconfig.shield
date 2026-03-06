@@ -1,0 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+config SHIELD_MIKROE_POWER_MONITOR_2_CLICK
+	def_bool $(shields_list_contains,mikroe_power_monitor_2_click)
