@@ -1,0 +1,14 @@
+sample:
+  description: Digital Power Monitor polling sample
+  name: DPM polling sample
+tests:
+  sample.sensor.dpm_polling:
+    build_only: true
+    tags: sensors
+    filter: dt_alias_exists("dpm0")
+    integration_platforms:
+      - ek_ra6m4
+    platform_allow:
+      - ek_ra6m4
+    extra_args:
+      - platform:ek_ra6m4:SHIELD="mikroe_power_monitor_2_click"
