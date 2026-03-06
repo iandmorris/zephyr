@@ -1,0 +1,31 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Ian Morris
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	aliases {
+		dpm0 = &ina219_0;
+		dpm1 = &ina219_1;
+	};
+};
+
+&mikrobus_i2c {
+	status = "okay";
+
+	ina219_0: ina219@40 {
+		status = "okay";
+		compatible = "ti,ina219";
+		reg = <0x40>;
+		shunt-milliohm = <10>;
+		lsb-microamp = <10>;
+	};
+
+	ina219_1: ina219@41 {
+		status = "okay";
+		compatible = "ti,ina219";
+		reg = <0x41>;
+		shunt-milliohm = <10>;
+		lsb-microamp = <10>;
+	};
+};
