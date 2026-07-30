@@ -1,0 +1,9 @@
+# Copyright (c) 2026 Ian Morris
+# SPDX-License-Identifier: Apache-2.0
+
+board:
+  name: mikroe_clicker_4_for_r7fa4m2a
+  full_name: Clicker 4 for R7FA4M2A
+  vendor: mikroe
+  socs:
+    - name: r7fa4m2ad3cfp
