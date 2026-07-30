@@ -1,0 +1,40 @@
+.. zephyr:board:: mikroe_clicker_4_for_r7fa4m2a
+
+Overview
+********
+[A short description about the board, its main features and availability]
+
+Hardware
+********
+[General Hardware information]
+
+Supported Features
+==================
+
+.. zephyr:board-supported-hw::
+
+Connections and IOs
+===================
+
+[Tables describing the board PINs and how they are configured and can be used
+to connect external components]
+
+Programming and Debugging
+*************************
+
+.. zephyr:board-supported-runners::
+
+Flashing
+========
+[How to use this board with Zephyr and how to flash a Zephyr binary on this
+device]
+
+
+Debugging
+=========
+[ How to debug this board]
+
+
+References
+**********
+[ Links to external references such as datasheets or additional documentation]

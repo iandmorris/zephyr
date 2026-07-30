@@ -1,0 +1,369 @@
+/*
+ * Copyright (c) 2026 Ian Morris
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+#include <renesas/ra/ra4/r7fa4m2ad3cfp.dtsi>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+#include "mikroe_clicker_4_for_r7fa4m2a-pinctrl.dtsi"
+
+/ {
+	model = "Mikroe Clicker 4 For R7FA4M2A";
+	compatible = "renesas,ra4m2", "renesas,ra";
+
+	chosen {
+		zephyr,console = &cdc_acm_uart0;
+		zephyr,shell-uart = &cdc_acm_uart0;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		ld1: led_1 {
+			gpios = <&ioport3 7 GPIO_ACTIVE_HIGH>;
+			label = "User LED 1";
+		};
+
+		ld2: led_2 {
+			gpios = <&ioport3 5 GPIO_ACTIVE_HIGH>;
+			label = "User LED 2";
+		};
+
+		ld3: led_3 {
+			gpios = <&ioport3 3 GPIO_ACTIVE_HIGH>;
+			label = "User LED 3";
+		};
+
+		ld4: led_4 {
+			gpios = <&ioport1 12 GPIO_ACTIVE_HIGH>;
+			label = "User LED 4";
+		};
+
+		ld5: led_5 {
+			gpios = <&ioport1 14 GPIO_ACTIVE_HIGH>;
+			label = "User LED 5";
+		};
+
+		ld6: led_6 {
+			gpios = <&ioport6 8 GPIO_ACTIVE_HIGH>;
+			label = "User LED 6";
+		};
+	};
+
+	buttons {
+		compatible = "gpio-keys";
+
+		btn3: button_3 {
+			gpios = <&ioport3 4 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "User Button 3";
+			zephyr,code = <INPUT_KEY_2>;
+		};
+
+		btn4: button_4 {
+			gpios = <&ioport1 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "User Button 4";
+			zephyr,code = <INPUT_KEY_3>;
+		};
+	};
+
+	mikrobus_1_header: mikrobus-connector-1 {
+		compatible = "mikro-bus";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map = <0 0 &ioport0 0 0>,	/* AN   */
+			   <1 0 &ioport2 11 0>,	/* RST  */
+			   <2 0 &ioport4 14 0>,	/* CS   */
+			   <3 0 &ioport4 12 0>,	/* SCK  */
+			   <4 0 &ioport4 10 0>,	/* MISO */
+			   <5 0 &ioport4 11 0>,	/* MOSI */
+			   /* +3.3V */
+			   /* GND */
+			   <6 0 &ioport2 5 0>,	/* PWM  */
+			   <7 0 &ioport4 4 0>,	/* INT  */
+			   <8 0 &ioport4 8 0>,	/* RX   */
+			   <9 0 &ioport4 9 0>,	/* TX   */
+			   <10 0 &ioport4 0 0>,	/* SCL  */
+			   <11 0 &ioport4 1 0>;	/* SDA  */
+		/* +5V */
+		/* GND */
+	};
+
+	mikrobus_2_header: mikrobus-connector-2 {
+		compatible = "mikro-bus";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map = <0 0 &ioport0 1 0>,	/* AN   */
+			   <1 0 &ioport2 10 0>,	/* RST  */
+			   <2 0 &ioport7 8 0>,	/* CS   */
+			   <3 0 &ioport4 12 0>,	/* SCK  */
+			   <4 0 &ioport4 10 0>,	/* MISO */
+			   <5 0 &ioport4 11 0>,	/* MOSI */
+			   /* +3.3V */
+			   /* GND */
+			   <6 0 &ioport2 14 0>,	/* PWM  */
+			   <7 0 &ioport4 15 0>,	/* INT  */
+			   <8 0 &ioport2 6 0>,	/* RX   */
+			   <9 0 &ioport2 7 0>,	/* TX   */
+			   <10 0 &ioport4 0 0>,	/* SCL  */
+			   <11 0 &ioport4 1 0>;	/* SDA  */
+		/* +5V */
+		/* GND */
+	};
+
+	mikrobus_3_header: mikrobus-connector-3 {
+		compatible = "mikro-bus";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map = <0 0 &ioport0 2 0>,	/* AN   */
+			   <1 0 &ioport2 9 0>,	/* RST  */
+			   <2 0 &ioport4 6 0>,	/* CS   */
+			   <3 0 &ioport4 12 0>,	/* SCK  */
+			   <4 0 &ioport4 10 0>,	/* MISO */
+			   <5 0 &ioport4 11 0>,	/* MOSI */
+			   /* +3.3V */
+			   /* GND */
+			   <6 0 &ioport6 10 0>,	/* PWM  */
+			   <7 0 &ioport0 6 0>,	/* INT  */
+			   <8 0 &ioport3 1 0>,	/* RX   */
+			   <9 0 &ioport3 2 0>,	/* TX   */
+			   <10 0 &ioport4 0 0>,	/* SCL  */
+			   <11 0 &ioport4 1 0>;	/* SDA  */
+		/* +5V */
+		/* GND */
+	};
+
+	mikrobus_4_header: mikrobus-connector-4 {
+		compatible = "mikro-bus";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0xffffffc0>;
+		gpio-map-pass-thru = <0 0x3f>;
+		gpio-map = <0 0 &ioport0 4 0>,	/* AN   */
+			   <1 0 &ioport2 8 0>,	/* RST  */
+			   <2 0 &ioport4 5 0>,	/* CS   */
+			   <3 0 &ioport4 12 0>,	/* SCK  */
+			   <4 0 &ioport4 10 0>,	/* MISO */
+			   <5 0 &ioport4 11 0>,	/* MOSI */
+			   /* +3.3V */
+			   /* GND */
+			   <6 0 &ioport1 5 0>,	/* PWM  */
+			   <7 0 &ioport1 1 0>,	/* INT  */
+			   <8 0 &ioport6 1 0>,	/* RX   */
+			   <9 0 &ioport6 2 0>,	/* TX   */
+			   <10 0 &ioport4 0 0>,	/* SCL  */
+			   <11 0 &ioport4 1 0>;	/* SDA  */
+		/* +5V */
+		/* GND */
+	};
+
+	aliases {
+		led0 = &ld1;
+		led1 = &ld2;
+		sw0 = &btn3;
+		sw1 = &btn4;
+	};
+};
+
+&xtal {
+	clock-frequency = <DT_FREQ_M(24)>;
+	mosel = <0>;
+	#clock-cells = <0>;
+	status = "okay";
+};
+
+&subclk {
+	status = "okay";
+};
+
+&pll {
+	clocks = <&xtal>;
+	div = <3>;
+	mul = <25 0>;
+	status = "okay";
+};
+
+&pll2 {
+	clocks = <&xtal>;
+	div = <2>;
+	mul = <20 0>;
+	status = "okay";
+};
+
+&uclk {
+	clocks = <&pll2>;
+	div = <5>;
+	status = "okay";
+};
+
+&sci2 {
+	status = "okay";
+	pinctrl-0 = <&sci2_default>;
+	pinctrl-names = "default";
+
+	uart2: uart {
+		current-speed = <115200>;
+		status = "okay";
+	};
+};
+
+&sci3 {
+	status = "okay";
+	pinctrl-0 = <&sci3_default>;
+	pinctrl-names = "default";
+
+	uart3: uart {
+		current-speed = <115200>;
+		status = "okay";
+	};
+};
+
+&sci4 {
+	status = "okay";
+	pinctrl-0 = <&sci4_default>;
+	pinctrl-names = "default";
+
+	uart4: uart {
+		current-speed = <115200>;
+		status = "okay";
+	};
+};
+
+&sci9 {
+	status = "okay";
+	pinctrl-0 = <&sci9_default>;
+	pinctrl-names = "default";
+
+	uart9: uart {
+		current-speed = <115200>;
+		status = "okay";
+	};
+};
+
+&iic0 {
+	pinctrl-0 = <&iic0_default>;
+	pinctrl-names = "default";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <I2C_BITRATE_FAST>;
+	interrupts = <87 1>, <88 1>, <89 1>, <90 1>;
+	interrupt-names = "rxi", "txi", "tei", "eri";
+	status = "okay";
+};
+
+// &sci0 {
+// 	status = "okay";
+// 	pinctrl-0 = <&sci0_default>;
+// 	pinctrl-names = "default";
+
+// 	spi0: spi {
+// 		#address-cells = <1>;
+// 		#size-cells = <0>;
+// 		channel = <0>;
+// 		clock-frequency = <DT_FREQ_M(1)>;
+// 		cs-gpios = <&ioport4 14 GPIO_ACTIVE_LOW>,
+// 			   <&ioport7 8 GPIO_ACTIVE_LOW>,
+// 			   <&ioport4 6 GPIO_ACTIVE_LOW>,
+// 			   <&ioport4 5 GPIO_ACTIVE_LOW>;
+// 		status = "okay";
+// 	};
+// };
+
+&usbfs {
+	pinctrl-0 = <&usbfs_default>;
+	pinctrl-names = "default";
+	maximum-speed = "full-speed";
+	status = "okay";
+
+	zephyr_udc0: udc {
+		status = "okay";
+		cdc_acm_uart0: cdc_acm_uart0 {
+			compatible = "zephyr,cdc-acm-uart";
+		};
+	};
+};
+
+&ioport0 {
+	status = "okay";
+};
+
+&ioport1 {
+	status = "okay";
+};
+
+&ioport2 {
+	status = "okay";
+};
+
+&ioport3 {
+	status = "okay";
+};
+
+&ioport4 {
+	status = "okay";
+};
+
+&ioport6 {
+	status = "okay";
+};
+
+&ioport7 {
+	status = "okay";
+};
+
+&port_irq4 {
+	interrupts = <39 12>;
+	status = "okay";
+};
+
+&port_irq9 {
+	interrupts = <40 12>;
+	status = "okay";
+};
+
+mikrobus_1_uart: &uart3 {};
+
+mikrobus_1_i2c: &iic0 {};
+
+//mikrobus_1_spi: &spi0 {};
+
+mikrobus_2_uart: &uart4 {};
+
+mikrobus_2_i2c: &iic0 {};
+
+//mikrobus_2_spi: &spi0 {};
+
+mikrobus_3_uart: &uart2 {};
+
+mikrobus_3_i2c: &iic0 {};
+
+//mikrobus_3_spi: &spi0 {};
+
+mikrobus_4_uart: &uart9 {};
+
+mikrobus_4_i2c: &iic0 {};
+
+//mikrobus_4_spi: &spi0 {};
+
+mikrobus_header_1: &mikrobus_1_header {};
+
+mikrobus_header_2: &mikrobus_2_header {};
+
+mikrobus_header_3: &mikrobus_3_header {};
+
+mikrobus_header_4: &mikrobus_4_header {};
+
+mikrobus_uart: &mikrobus_1_uart {};
+
+mikrobus_i2c: &mikrobus_1_i2c {};
+
+//mikrobus_spi: &mikrobus_1_spi {};
+
+mikrobus_header: &mikrobus_1_header {};

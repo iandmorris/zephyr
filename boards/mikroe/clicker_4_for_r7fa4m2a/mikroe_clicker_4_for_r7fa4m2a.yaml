@@ -1,0 +1,14 @@
+identifier: mikroe_clicker_4_for_r7fa4m2a
+name: Mikroe Clicker 4 For R7FA4M2A
+vendor: mikroe
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+ram: 128
+flash: 512
+supported:
+  - gpio
+  - uart
+  - i2c
